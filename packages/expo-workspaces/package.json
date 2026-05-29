@@ -1,8 +1,8 @@
 {
-  "name": "expo-workspaces",
+  "name": "@expo-workspaces/meta",
   "version": "1.0.0",
   "private": true,
-  "description": "Declarative, manifest-first iOS + Android workspace generation for Expo CNG. Meta package composing the expo-workspaces-* capability generators.",
+  "description": "Internal composition package (bundle source) for expo-workspaces. Composes the @expo-workspaces/* capability generators; bundled into the root `expo-workspaces` package for distribution.",
   "license": "MIT",
   "main": "app.plugin.js",
   "types": "build/index.d.ts",
@@ -16,13 +16,20 @@
       "default": "./build/types.js"
     }
   },
-  "files": ["app.plugin.js", "build", "README.md", "LICENSE"],
-  "scripts": {
-    "build": "tsc -b",
-    "test": "npm run build && node --test build/**/*.test.js",
-    "typecheck": "tsc -b"
-  },
-  "keywords": ["expo", "expo-plugin", "cng", "manifest", "declarative", "workspace"],
+  "files": [
+    "app.plugin.js",
+    "build",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "expo",
+    "expo-plugin",
+    "cng",
+    "manifest",
+    "declarative",
+    "workspace"
+  ],
   "dependencies": {
     "@expo-workspaces/core": "workspace:",
     "@expo-workspaces/ios-xcode": "workspace:",
@@ -37,8 +44,12 @@
     "expo": ">=56.0.0"
   },
   "peerDependenciesMeta": {
-    "@expo/config-plugins": { "optional": true },
-    "expo": { "optional": true }
+    "@expo/config-plugins": {
+      "optional": true
+    },
+    "expo": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

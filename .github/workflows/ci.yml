@@ -1,0 +1,61 @@
+name: CI
+
+# expo-workspaces is distributed as a git-installable bundle: the committed
+# `build/` is what consumers receive (there is no build-on-install). This workflow
+# keeps that artifact correct — it fails PRs whose bundle is stale, and refreshes
+# the bundle on `main` so the default branch is always installable.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4 # reads the version from `packageManager` in package.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build (gen:templates → tsc -b → bundle)
+        run: pnpm build
+
+      - name: Verify committed bundle is in sync (pull requests)
+        if: github.event_name == 'pull_request'
+        run: |
+          if ! git diff --quiet -- build; then
+            echo "::error::Committed bundle is stale. Run 'pnpm build' and commit ./build (+ templates.ts)."
+            git diff --stat -- build
+            exit 1
+          fi
+          echo "Bundle is in sync."
+
+      - name: Refresh bundle if drifted (main)
+        if: github.event_name == 'push'
+        run: |
+          if git diff --quiet -- build; then
+            echo "Bundle already in sync."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add build
+            git commit -m "chore: rebuild bundle [skip ci]"
+            git push
+          fi

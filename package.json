@@ -1,21 +1,72 @@
 {
-  "name": "expo-workspaces-monorepo",
-  "private": true,
-  "version": "0.0.0",
-  "description": "Declarative, manifest-first iOS + Android workspace generation for Expo CNG. A composable set of config-plugin capability packages.",
+  "name": "expo-workspaces",
+  "version": "1.0.0",
+  "description": "Declarative, manifest-first iOS + Android workspace generation for Expo CNG. Composable config-plugin capabilities bundled into one Expo plugin.",
   "license": "MIT",
+  "author": "gugell",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gugell/expo-workspaces.git"
+  },
+  "homepage": "https://github.com/gugell/expo-workspaces#readme",
+  "bugs": {
+    "url": "https://github.com/gugell/expo-workspaces/issues"
+  },
+  "keywords": [
+    "expo",
+    "expo-plugin",
+    "config-plugin",
+    "cng",
+    "prebuild",
+    "xcode",
+    "ios",
+    "android",
+    "manifest",
+    "declarative",
+    "workspace"
+  ],
+  "main": "app.plugin.js",
+  "types": "build/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./build/index.d.ts",
+      "default": "./app.plugin.js"
+    },
+    "./types": {
+      "types": "./build/types.d.ts",
+      "default": "./build/types.js"
+    }
+  },
+  "files": [
+    "app.plugin.js",
+    "build",
+    "README.md",
+    "LICENSE"
+  ],
   "packageManager": "pnpm@9.12.3",
   "scripts": {
-    "build": "tsc -b",
-    "clean": "tsc -b --clean",
+    "build": "tsc -b && node scripts/bundle.mjs",
+    "bundle": "node scripts/bundle.mjs",
     "watch": "tsc -b --watch",
-    "typecheck": "tsc -b",
-    "prepare": "tsc -b",
-    "test": "pnpm -r run test"
+    "clean": "tsc -b --clean && node -e \"require('fs').rmSync('build',{recursive:true,force:true})\"",
+    "prepack": "pnpm build"
+  },
+  "dependencies": {
+    "@bacons/xcode": "1.0.0-alpha.32",
+    "@expo/plist": "0.7.0"
+  },
+  "peerDependencies": {
+    "@expo/config-plugins": ">=56.0.0",
+    "expo": ">=56.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@expo/config-plugins": { "optional": true },
+    "expo": { "optional": true }
   },
   "devDependencies": {
     "@expo/config-plugins": "^56.0.0",
     "@types/node": "^22.10.0",
+    "esbuild": "^0.24.2",
     "typescript": "~5.9.2"
   },
   "engines": {

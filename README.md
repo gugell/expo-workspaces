@@ -46,16 +46,21 @@ You describe *what* you want — local & remote pods, Xcode schemes, first‑par
 
 ## Quick start
 
-**1. Install** (local development via link, until published):
+**1. Install** — the repo root ships a self-contained bundle, so install it straight from git:
+
+```sh
+pnpm add github:gugell/expo-workspaces        # public repo
+# private repo (uses your SSH key):
+pnpm add "expo-workspaces@git+ssh://git@github.com/gugell/expo-workspaces.git"
+# pin a tag/commit: …/expo-workspaces.git#v1.0.0
+```
 
 ```jsonc
-// apps/<app>/package.json
-{
-  "dependencies": {
-    "expo-workspaces": "link:../../path/to/expo-workspaces/packages/expo-workspaces"
-  }
-}
+// apps/<app>/package.json — resulting entry
+{ "dependencies": { "expo-workspaces": "git+ssh://git@github.com/gugell/expo-workspaces.git" } }
 ```
+
+> Working on the plugin itself? See [Development](#development-monorepo) for a local link.
 
 **2. Enable the plugin** in `app.json` (register it **last** so its finalized mods run after other native plugins):
 
@@ -220,16 +225,35 @@ Adding a capability is just shipping a new package that exports a `Generator` (a
 
 ## Development (monorepo)
 
-Built with plain **TypeScript project references** — `tsc -b` builds the whole graph in dependency order, incrementally.
+Built with plain **TypeScript project references** — `tsc -b` builds the whole graph in dependency order, incrementally. The capabilities are then bundled into the repo root as a single self‑contained, git‑installable `expo-workspaces` package (esbuild).
 
 ```sh
-pnpm install      # installs + builds everything (root `prepare` runs `tsc -b`)
-pnpm build        # tsc -b
-pnpm watch        # tsc -b --watch
-pnpm clean        # tsc -b --clean
+pnpm install   # link the workspace
+pnpm build     # tsc -b → bundle into ./build
+pnpm watch     # tsc -b --watch (per-package, no bundle)
+pnpm clean     # tsc -b --clean + remove ./build
 ```
 
-Layout follows the Expo monorepo convention: the meta package lives at `packages/expo-workspaces`, capabilities at `packages/@expo-workspaces/*`.
+Layout follows the Expo monorepo convention: the bundle source meta package lives at `packages/expo-workspaces` (`@expo-workspaces/meta`, private), capabilities at `packages/@expo-workspaces/*` (private). The **repo root** is the published/git‑installable `expo-workspaces` package — its committed `build/` is the bundled artifact consumers receive.
+
+Schemes, targets, and all pbx edits are produced through the **`@bacons/xcode` object model** (`XCScheme`, `PBXNativeTarget`, …) — there is no XML/string templating.
+
+**Local link** (to develop the plugin against an app without pushing): in the app, `pnpm add link:../path/to/expo-workspaces` (the repo root — run `pnpm build` first so `./build` exists), or use a `git+file://` URL.
+
+**Releasing:** the git‑installable artifact is the committed `build/`. After any change, run `pnpm build` and commit the updated `build/` before pushing — consumers fetch the committed bundle (there is no build‑on‑install). See [`.github/workflows`](.github/workflows) — CI keeps `build/` in sync automatically.
+
+### Contributing
+
+1. `pnpm install`
+2. Edit sources under `packages/@expo-workspaces/*/src` (or `packages/expo-workspaces/src` for composition).
+3. If you change the **public manifest surface**, mirror it in `dist-types/types.d.ts` (and `dist-types/index.d.ts` for new exports). These are the hand‑curated, consumer‑facing declarations the bundle ships — they are *not* auto‑generated from the capability types, so keep them in sync. ⚠️
+4. `pnpm build` — `tsc -b` (type‑checks + builds every package via project references) then bundles into `build/` (copying `dist-types/*` in).
+5. Commit your `src` changes **and** the regenerated `build/`.
+6. Open a PR — CI rebuilds and **fails if the committed `build/` is stale**. On merge to `main`, CI **auto‑refreshes** `build/`.
+
+**Committed vs generated:** the root `build/` (the shipped bundle) and `dist-types/` (its type source) are committed; per‑package `packages/**/build/` and `*.tsbuildinfo` are gitignored — rebuilt locally by `tsc -b`.
+
+> Prefer not to commit build artifacts? The alternative is publishing to npm (build on publish, `build/` gitignored). The metadata + `prepack` are already in place for that — see the note under [Install](#quick-start).
 
 ## Compatibility
 

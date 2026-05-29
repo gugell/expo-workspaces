@@ -6,12 +6,11 @@
   "license": "MIT",
   "main": "build/index.js",
   "types": "build/index.d.ts",
-  "files": ["build", "templates", "README.md", "LICENSE"],
-  "scripts": {
-    "build": "tsc -b",
-    "test": "npm run build && node --test build/**/*.test.js",
-    "typecheck": "tsc -b"
-  },
+  "files": [
+    "build",
+    "README.md",
+    "LICENSE"
+  ],
   "dependencies": {
     "@expo-workspaces/core": "workspace:",
     "@bacons/xcode": "1.0.0-alpha.32"
@@ -21,8 +20,12 @@
     "expo": ">=56.0.0"
   },
   "peerDependenciesMeta": {
-    "@expo/config-plugins": { "optional": true },
-    "expo": { "optional": true }
+    "@expo/config-plugins": {
+      "optional": true
+    },
+    "expo": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

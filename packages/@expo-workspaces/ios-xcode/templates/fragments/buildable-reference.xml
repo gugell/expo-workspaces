@@ -1,7 +1,0 @@
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "{{BLUEPRINT_ID}}"
-               BuildableName = "{{BUILDABLE_NAME}}"
-               BlueprintName = "{{BLUEPRINT_NAME}}"
-               ReferencedContainer = "container:{{XCODEPROJ_BASENAME}}">
-            </BuildableReference>
