@@ -37,7 +37,3 @@ export function normalizeSchemeDefinitions(
     return { ...scheme, name };
   });
 }
-
-export function schemeFileName(schemeName: string): string {
-  return `${schemeName}.xcscheme`;
-}

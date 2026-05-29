@@ -1,25 +1,16 @@
-# expo-workspaces
+# @expo-workspaces/meta
 
-> Meta package — the Expo config plugin you add to `app.json`.
+> Internal package — **the bundle source**, not what you install.
 
-Composes every `@expo-workspaces/*` capability generator and executor into a single declarative, manifest‑first workspace plugin for Expo CNG.
+Composes every `@expo-workspaces/*` capability generator and executor into the workspace plugin. It is private and never published on its own: the build step bundles it (plus all capabilities) into the **repo root** `expo-workspaces` package, which is the git‑installable artifact consumers add.
 
-## Install
+👉 To use the plugin, see the [repository README](../../README.md). Install it with:
 
-```jsonc
-// app.json
-{ "expo": { "plugins": ["expo-workspaces"] } }
-// or: ["expo-workspaces", { "manifestPath": "config/workspace.manifest.js" }]
+```sh
+pnpm add github:gugell/expo-workspaces
 ```
 
-Author `workspace.manifest.js` at the app root:
-
-```js
-/** @type {import('expo-workspaces/types').WorkspaceManifest} */
-module.exports = { manifestVersion: 1 /* … */ };
-```
-
-## Exports
+## Exports (re-exported by the root bundle)
 
 - `default` — the config plugin (run‑once).
 - `withWorkspace` — the composed plugin (for custom wrapping).
@@ -28,6 +19,6 @@ module.exports = { manifestVersion: 1 /* … */ };
 
 ## Docs
 
-See the [repository README](../../README.md) and [`docs/`](../../docs): [manifest reference](../../docs/manifest.md) · [architecture](../../docs/architecture.md) · [iOS targets](../../docs/ios-targets.md) · [Android](../../docs/android.md).
+[manifest reference](../../docs/manifest.md) · [architecture](../../docs/architecture.md) · [iOS targets](../../docs/ios-targets.md) · [Android](../../docs/android.md).
 
 MIT

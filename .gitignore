@@ -35,8 +35,9 @@ coverage/
 
 # Build output
 dist/
-build/
 build/Release
+# Per-package tsc outputs are ignored; the root build/ is the committed dist bundle.
+packages/**/build/
 
 # TypeScript cache
 *.tsbuildinfo
