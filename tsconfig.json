@@ -1,0 +1,13 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/@expo-workspaces/core" },
+    { "path": "packages/@expo-workspaces/ios-xcode" },
+    { "path": "packages/@expo-workspaces/ios-pods" },
+    { "path": "packages/@expo-workspaces/ios-targets" },
+    { "path": "packages/@expo-workspaces/ios-spm" },
+    { "path": "packages/@expo-workspaces/patch" },
+    { "path": "packages/@expo-workspaces/android" },
+    { "path": "packages/expo-workspaces" }
+  ]
+}

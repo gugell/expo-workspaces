@@ -1,0 +1,24 @@
+{
+  "name": "expo-workspaces-monorepo",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Declarative, manifest-first iOS + Android workspace generation for Expo CNG. A composable set of config-plugin capability packages.",
+  "license": "MIT",
+  "packageManager": "pnpm@9.12.3",
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean",
+    "watch": "tsc -b --watch",
+    "typecheck": "tsc -b",
+    "prepare": "tsc -b",
+    "test": "pnpm -r run test"
+  },
+  "devDependencies": {
+    "@expo/config-plugins": "^56.0.0",
+    "@types/node": "^22.10.0",
+    "typescript": "~5.9.2"
+  },
+  "engines": {
+    "node": ">=20.19.4"
+  }
+}

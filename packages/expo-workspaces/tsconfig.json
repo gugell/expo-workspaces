@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "build",
+    "rootDir": "src"
+  },
+  "include": ["src"],
+  "references": [
+    { "path": "../@expo-workspaces/core" },
+    { "path": "../@expo-workspaces/ios-xcode" },
+    { "path": "../@expo-workspaces/ios-pods" },
+    { "path": "../@expo-workspaces/ios-targets" },
+    { "path": "../@expo-workspaces/ios-spm" },
+    { "path": "../@expo-workspaces/patch" },
+    { "path": "../@expo-workspaces/android" }
+  ]
+}
