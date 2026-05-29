@@ -242,6 +242,19 @@ Schemes, targets, and all pbx edits are produced through the **`@bacons/xcode` o
 
 **Releasing:** the git‑installable artifact is the committed `build/`. After any change, run `pnpm build` and commit the updated `build/` before pushing — consumers fetch the committed bundle (there is no build‑on‑install). See [`.github/workflows`](.github/workflows) — CI keeps `build/` in sync automatically.
 
+### Contributing
+
+1. `pnpm install`
+2. Edit sources under `packages/@expo-workspaces/*/src` (or `packages/expo-workspaces/src` for composition).
+3. If you change the **public manifest surface**, mirror it in `dist-types/types.d.ts` (and `dist-types/index.d.ts` for new exports). These are the hand‑curated, consumer‑facing declarations the bundle ships — they are *not* auto‑generated from the capability types, so keep them in sync. ⚠️
+4. `pnpm build` — `tsc -b` (type‑checks + builds every package via project references) then bundles into `build/` (copying `dist-types/*` in).
+5. Commit your `src` changes **and** the regenerated `build/`.
+6. Open a PR — CI rebuilds and **fails if the committed `build/` is stale**. On merge to `main`, CI **auto‑refreshes** `build/`.
+
+**Committed vs generated:** the root `build/` (the shipped bundle) and `dist-types/` (its type source) are committed; per‑package `packages/**/build/` and `*.tsbuildinfo` are gitignored — rebuilt locally by `tsc -b`.
+
+> Prefer not to commit build artifacts? The alternative is publishing to npm (build on publish, `build/` gitignored). The metadata + `prepack` are already in place for that — see the note under [Install](#quick-start).
+
 ## Compatibility
 
 | Tool | Version |
