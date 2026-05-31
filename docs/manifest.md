@@ -127,10 +127,22 @@ Root directory (relative to the app) scanned for target source. Default `./targe
   frameworks?: string[];                // extra frameworks (the type adds its own defaults)
   source?: string;                      // override source dir (default `${targetsRoot}/${name}`)
   buildSettings?: Record<string, string>; // applied to the target's Debug + Release configs
+  pods?: TargetPod[];                   // CocoaPods deps emitted as a `target '<name>' do … end` block
 }
+
+type TargetPod = {
+  pod: string;
+  path?: string;                        // local pod path (relative to ios/)
+  version?: string;                     // e.g. "~> 1.2"
+  git?: string; branch?: string; tag?: string; commit?: string;
+  configurations?: string[];
+  modularHeaders?: boolean;
+};
 ```
 
 Source files live on disk under `targets/<name>/`. See [`ios-targets.md`](ios-targets.md).
+
+> **Per-target pods:** declaring `pods` in the manifest is the recommended, declarative replacement for `targets/<name>/pods.rb`. The Podfile loader that consumes `pods.rb` files is still appended (back‑compat) — but don't declare the same target in both places, or CocoaPods sees duplicate `target` blocks.
 
 ---
 

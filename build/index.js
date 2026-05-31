@@ -1800,6 +1800,26 @@ var require_validate4 = __commonJS({
             }
           }
         }
+        if (target.pods !== void 0) {
+          if (!Array.isArray(target.pods)) {
+            throw new Error(`${core_1.ERR} targets[${index}].pods must be an array.`);
+          }
+          target.pods.forEach((entry, podIdx) => {
+            const label = `targets[${index}].pods[${podIdx}]`;
+            if (!entry || typeof entry !== "object") {
+              throw new Error(`${core_1.ERR} ${label} must be an object.`);
+            }
+            if (!entry.pod || typeof entry.pod !== "string" || !entry.pod.trim()) {
+              throw new Error(`${core_1.ERR} ${label} requires a non-empty "pod" name.`);
+            }
+            if (entry.path !== void 0 && (typeof entry.path !== "string" || !entry.path.trim())) {
+              throw new Error(`${core_1.ERR} ${label}.path must be a non-empty string when provided.`);
+            }
+            if (entry.configurations !== void 0 && !Array.isArray(entry.configurations)) {
+              throw new Error(`${core_1.ERR} ${label}.configurations must be an array of strings.`);
+            }
+          });
+        }
         return { ...target, name };
       });
     }
@@ -1828,6 +1848,34 @@ var require_targets = __commonJS({
     var validate_1 = require_validate4();
     var DEFAULT_DEPLOYMENT_TARGET = "18.0";
     var APP_GROUPS_KEY = "com.apple.security.application-groups";
+    function targetPodLine(pod) {
+      const parts = [`pod '${pod.pod}'`];
+      if (pod.path) {
+        parts.push(`:path => '${pod.path}'`);
+      } else if (pod.version) {
+        parts.push(`'${pod.version}'`);
+      }
+      if (pod.git)
+        parts.push(`:git => '${pod.git}'`);
+      if (pod.branch)
+        parts.push(`:branch => '${pod.branch}'`);
+      if (pod.tag)
+        parts.push(`:tag => '${pod.tag}'`);
+      if (pod.commit)
+        parts.push(`:commit => '${pod.commit}'`);
+      if (pod.configurations?.length) {
+        const cfgs = pod.configurations.map((c) => `'${c}'`).join(", ");
+        parts.push(`:configurations => [${cfgs}]`);
+      }
+      if (pod.modularHeaders != null)
+        parts.push(`:modular_headers => ${pod.modularHeaders}`);
+      return `  ${parts.join(", ")}`;
+    }
+    function buildTargetPodsBlock(name, pods) {
+      return `target '${name}' do
+${pods.map(targetPodLine).join("\n")}
+end`;
+    }
     function sanitizeProductName(name) {
       return name.replace(/[\W_]+/g, "").normalize("NFD").replace(/[̀-ͯ]/g, "");
     }
@@ -1927,6 +1975,22 @@ var require_targets = __commonJS({
           label: "targetsPodfileLoader"
         };
         ops.push(loaderOp);
+        for (const { spec } of resolved) {
+          if (!spec.pods?.length)
+            continue;
+          const op = {
+            kind: "mergeBlock",
+            base: "ios",
+            path: "Podfile",
+            tag: `expo-workspaces-target-pods-${spec.name}`,
+            newSrc: buildTargetPodsBlock(spec.name, spec.pods),
+            anchor: new RegExp(podsLoader_1.TARGETS_LOADER_MARKER),
+            offset: 0,
+            comment: "#",
+            label: `target:${spec.name}:pods`
+          };
+          ops.push(op);
+        }
         const plans = resolved.map((r) => r.plan);
         const teamId = config.ios?.appleTeamId;
         const marketingVersion = config.ios?.version || config.version || "1.0.0";

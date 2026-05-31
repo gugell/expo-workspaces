@@ -17,6 +17,7 @@ targets: [
     bundleIdentifier: '.ShareExtension',
     deploymentTarget: '16.4',
     entitlements: { 'com.apple.security.application-groups': ['group.com.example.app'] },
+    pods: [{ pod: 'MyKit/Shared', path: '../../../packages/mykit' }],   // replaces pods.rb
     // frameworks: [...], source: '...', buildSettings: { ... }
   },
 ]

@@ -21,6 +21,29 @@ export interface TargetSpec {
    * generated defaults.
    */
   buildSettings?: Record<string, string>;
+  /**
+   * CocoaPods dependencies for this target. Emitted as a tagged, idempotent
+   * `target '<name>' do … end` block in the Podfile — a manifest-first
+   * replacement for `targets/<name>/pods.rb` (which is still supported via the
+   * extension loader). Don't declare the same target in both places, or
+   * CocoaPods will see duplicate `target` blocks.
+   */
+  pods?: TargetPod[];
+}
+
+/** A CocoaPods dependency entry for a target's `pods` array. */
+export interface TargetPod {
+  pod: string;
+  /** Path to a local pod, relative to the `ios/` directory. */
+  path?: string;
+  /** Version requirement, e.g. "~> 1.2" or "1.2.3". */
+  version?: string;
+  git?: string;
+  branch?: string;
+  tag?: string;
+  commit?: string;
+  configurations?: string[];
+  modularHeaders?: boolean;
 }
 
 /** The manifest slice this package consumes. */

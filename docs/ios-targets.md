@@ -46,8 +46,27 @@ How each piece is handled:
 - **Swift / storyboards / asset catalogs** — the generator attaches an Xcode **file‑system‑synchronized group** to `targets/<name>/`, so Xcode auto‑includes everything there. No per‑file registration, no manual `project.pbxproj` edits.
 - **`Info.plist`** — written **only if absent** (per‑type template). Commit your own to customize (e.g. a Share extension's `NSExtensionActivationRule`); it's left untouched.
 - **entitlements** — declared in the manifest → serialized to `generated.entitlements`, with `CODE_SIGN_ENTITLEMENTS` + `REGISTER_APP_GROUPS` set. If you commit a differently‑named `*.entitlements`, it's detected and reused. For all three types, app groups are inherited from the app when you don't declare any.
-- **`pods.rb`** — the target's pods. The generator appends a loader to the Podfile (`Dir.glob('targets/**/pods.rb')`) that evaluates each file inside a `target '<name>' do … end` block.
+- **`pods.rb`** — the target's pods. The generator appends a loader to the Podfile (`Dir.glob('targets/**/pods.rb')`) that evaluates each file inside a `target '<name>' do … end` block. **Prefer declaring pods in the manifest** (see below) — it's the cleaner, single‑source‑of‑truth approach and lets you delete `pods.rb`.
 - **`expo-target.config.js`** — **not used for config** (that moved to the manifest). It's only excluded from target membership; you can delete it.
+
+## Declaring the target's pods in the manifest
+
+Skip the `pods.rb` file entirely by listing the target's CocoaPods deps under `pods`:
+
+```js
+{
+  name: 'ShareExtension', type: 'share', bundleIdentifier: '.ShareExtension',
+  pods: [
+    { pod: 'MyKit/Shared', path: '../../../packages/mykit' },  // local path (relative to ios/)
+    { pod: 'Alamofire',    version: '~> 5.9' },                // remote version
+    // { pod: 'X', git: 'https://…', tag: '1.2', configurations: ['Debug'], modularHeaders: true },
+  ],
+}
+```
+
+The generator emits a tagged, idempotent `target '<name>' do … end` mergeBlock into the Podfile (anchored just above `post_install`). Re-running prebuild stays clean (`# @generated begin/end` markers).
+
+> Don't declare the same target in both the manifest and a `pods.rb` file — CocoaPods will see duplicate `target` blocks. The `Dir.glob('targets/**/pods.rb')` loader is still appended for back-compat; manifest `pods` is the recommended path.
 
 ## Build settings
 
