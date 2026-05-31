@@ -87,6 +87,24 @@ export interface TargetSpec {
   source?: string;
   /** Build settings applied to the target's Debug + Release configs. */
   buildSettings?: Record<string, string>;
+  /**
+   * CocoaPods dependencies for this target. Emitted as a `target '<name>' do … end`
+   * block in the Podfile — a manifest-first alternative to `targets/<name>/pods.rb`.
+   */
+  pods?: TargetPod[];
+}
+
+export interface TargetPod {
+  pod: string;
+  /** Local pod path, relative to ios/. */
+  path?: string;
+  version?: string;
+  git?: string;
+  branch?: string;
+  tag?: string;
+  commit?: string;
+  configurations?: string[];
+  modularHeaders?: boolean;
 }
 
 export interface IosTargetsManifest {

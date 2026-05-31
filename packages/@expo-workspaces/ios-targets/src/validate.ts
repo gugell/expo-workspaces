@@ -65,6 +65,26 @@ export function normalizeTargets(targets: TargetSpec[] | undefined): TargetSpec[
         }
       }
     }
+    if (target.pods !== undefined) {
+      if (!Array.isArray(target.pods)) {
+        throw new Error(`${ERR} targets[${index}].pods must be an array.`);
+      }
+      target.pods.forEach((entry, podIdx) => {
+        const label = `targets[${index}].pods[${podIdx}]`;
+        if (!entry || typeof entry !== 'object') {
+          throw new Error(`${ERR} ${label} must be an object.`);
+        }
+        if (!entry.pod || typeof entry.pod !== 'string' || !entry.pod.trim()) {
+          throw new Error(`${ERR} ${label} requires a non-empty "pod" name.`);
+        }
+        if (entry.path !== undefined && (typeof entry.path !== 'string' || !entry.path.trim())) {
+          throw new Error(`${ERR} ${label}.path must be a non-empty string when provided.`);
+        }
+        if (entry.configurations !== undefined && !Array.isArray(entry.configurations)) {
+          throw new Error(`${ERR} ${label}.configurations must be an array of strings.`);
+        }
+      });
+    }
     return { ...target, name };
   });
 }
