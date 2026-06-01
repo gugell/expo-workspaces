@@ -188,6 +188,11 @@ var require_fileExecutor = __commonJS({
               });
               let contents;
               if (!result.didMerge && !result.didClear) {
+                const beginMarker = `${op.comment} @generated begin ${op.tag}`;
+                if (original.includes(beginMarker)) {
+                  (0, report_1.reportSkip)(op.label, filePath);
+                  continue;
+                }
                 if (!op.appendIfNoAnchor) {
                   throw new Error(`${ERR} ${op.label}: anchor ${op.anchor} not found in ${filePath}.`);
                 }
@@ -1182,6 +1187,7 @@ var require_validate3 = __commonJS({
   "packages/@expo-workspaces/ios-spm/build/validate.js"(exports2) {
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.normalizeTargetRef = normalizeTargetRef;
     exports2.normalizeRemotePackages = normalizeRemotePackages;
     exports2.normalizeLocalPackages = normalizeLocalPackages;
     var core_1 = require_build();
@@ -1203,17 +1209,47 @@ var require_validate3 = __commonJS({
         throw new Error(`${core_1.ERR} ${label}.products must be a non-empty array of product names.`);
       }
     }
+    function normalizeTargetRef(target, label) {
+      if (target === void 0) {
+        return void 0;
+      }
+      if (typeof target === "string") {
+        const trimmed = target.trim();
+        if (!trimmed) {
+          throw new Error(`${core_1.ERR} ${label}.target must be a non-empty string.`);
+        }
+        return [trimmed];
+      }
+      if (!Array.isArray(target) || target.length === 0) {
+        throw new Error(`${core_1.ERR} ${label}.target must be a non-empty string or array of strings.`);
+      }
+      const normalized = [];
+      for (let i = 0; i < target.length; i += 1) {
+        const entry = target[i];
+        if (typeof entry !== "string" || !entry.trim()) {
+          throw new Error(`${core_1.ERR} ${label}.target[${i}] must be a non-empty string.`);
+        }
+        normalized.push(entry.trim());
+      }
+      return normalized;
+    }
     function normalizeRemotePackages(packages) {
       if (!Array.isArray(packages) || packages.length === 0) {
         return [];
       }
       return packages.map((pkg, index) => {
+        const label = `swiftPackages.remote[${index}]`;
         if (!pkg?.url?.trim()) {
-          throw new Error(`${core_1.ERR} swiftPackages.remote[${index}] requires a "url".`);
+          throw new Error(`${core_1.ERR} ${label} requires a "url".`);
         }
-        assertRequirement(pkg.requirement, `swiftPackages.remote[${index}]`);
-        assertProducts(pkg.products, `swiftPackages.remote[${index}]`);
-        return { ...pkg, url: pkg.url.trim() };
+        assertRequirement(pkg.requirement, label);
+        assertProducts(pkg.products, label);
+        return {
+          ...pkg,
+          url: pkg.url.trim(),
+          target: normalizeTargetRef(pkg.target, label),
+          podTarget: normalizeTargetRef(pkg.podTarget, `${label}.podTarget`)
+        };
       });
     }
     function normalizeLocalPackages(packages) {
@@ -1221,11 +1257,17 @@ var require_validate3 = __commonJS({
         return [];
       }
       return packages.map((pkg, index) => {
+        const label = `swiftPackages.local[${index}]`;
         if (!pkg?.path?.trim()) {
-          throw new Error(`${core_1.ERR} swiftPackages.local[${index}] requires a "path".`);
+          throw new Error(`${core_1.ERR} ${label} requires a "path".`);
         }
-        assertProducts(pkg.products, `swiftPackages.local[${index}]`);
-        return { ...pkg, path: pkg.path.trim() };
+        assertProducts(pkg.products, label);
+        return {
+          ...pkg,
+          path: pkg.path.trim(),
+          target: normalizeTargetRef(pkg.target, label),
+          podTarget: normalizeTargetRef(pkg.podTarget, `${label}.podTarget`)
+        };
       });
     }
   }
@@ -1259,7 +1301,7 @@ var require_spm = __commonJS({
       root.packageReferences = root.packageReferences ?? [];
       root.packageReferences.push(ref);
     }
-    function linkProducts(project, pkgRef, products, targetName) {
+    function linkProductsToTarget(project, pkgRef, products, targetName) {
       const target = findTarget(project, targetName);
       const targetProps = target.props;
       targetProps.packageProductDependencies = targetProps.packageProductDependencies ?? [];
@@ -1273,6 +1315,85 @@ var require_spm = __commonJS({
         target.getFrameworksBuildPhase().props.files.push(buildFile);
       }
     }
+    function linkProducts(project, pkgRef, products, targets) {
+      if (!targets || targets.length === 0) {
+        linkProductsToTarget(project, pkgRef, products, void 0);
+        return;
+      }
+      for (const targetName of targets) {
+        linkProductsToTarget(project, pkgRef, products, targetName);
+      }
+    }
+    var POD_TARGET_ANCHOR = /post_install do \|installer\|/;
+    var rubyString = (value) => `'${value.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}'`;
+    var rubyArray = (values) => `[${values.map(rubyString).join(", ")}]`;
+    function slugify(value) {
+      return value.toLowerCase().replace(/^https?:\/\//, "").replace(/\.git$/, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+    }
+    function rubyRequirement(req) {
+      const entries = Object.entries(req).map(([k, v]) => `${rubyString(k)} => ${rubyString(String(v))}`);
+      return `{ ${entries.join(", ")} }`;
+    }
+    function renderPodTargetSpmRuby(spec) {
+      const klass = spec.kind === "local" ? "Xcodeproj::Project::Object::XCLocalSwiftPackageReference" : "Xcodeproj::Project::Object::XCRemoteSwiftPackageReference";
+      const prop = spec.kind === "local" ? "relative_path" : "repositoryURL";
+      const idLit = rubyString(spec.identifier);
+      const requirementLine = spec.kind === "remote" && spec.requirement ? `      ref.requirement = ${rubyRequirement(spec.requirement)}
+` : "";
+      return [
+        `  # SPM \u2192 pod target(s): ${spec.identifier}`,
+        `  begin`,
+        `    spm_pkg_ref = installer.pods_project.root_object.package_references.find do |ref|`,
+        `      ref.respond_to?(:${prop}) && ref.${prop} == ${idLit}`,
+        `    end`,
+        `    spm_pkg_ref ||= begin`,
+        `      ref = installer.pods_project.new(${klass})`,
+        `      ref.${prop} = ${idLit}`,
+        requirementLine.trimEnd(),
+        `      installer.pods_project.root_object.package_references << ref`,
+        `      ref`,
+        `    end`,
+        `    ${rubyArray(spec.podTargets)}.each do |target_name|`,
+        `      target = installer.pods_project.targets.find { |t| t.name == target_name }`,
+        `      next unless target`,
+        `      ${rubyArray(spec.products)}.each do |product_name|`,
+        `        next if target.package_product_dependencies.any? { |d| d.product_name == product_name }`,
+        `        dep = installer.pods_project.new(Xcodeproj::Project::Object::XCSwiftPackageProductDependency)`,
+        `        dep.package = spm_pkg_ref`,
+        `        dep.product_name = product_name`,
+        `        target.package_product_dependencies << dep`,
+        `        bf = installer.pods_project.new(Xcodeproj::Project::Object::PBXBuildFile)`,
+        `        bf.product_ref = dep`,
+        `        target.frameworks_build_phase.files << bf`,
+        `      end`,
+        `    end`,
+        `  end`
+      ].filter((line) => line !== "").join("\n");
+    }
+    function podTargetSpmOp(spec) {
+      return {
+        kind: "mergeBlock",
+        base: "ios",
+        path: "Podfile",
+        tag: `expo-workspaces-spm-pod-target-${spec.slug}`,
+        newSrc: renderPodTargetSpmRuby(spec),
+        anchor: POD_TARGET_ANCHOR,
+        offset: 1,
+        comment: "#",
+        label: `swiftPackages:podTarget:${spec.slug}`
+      };
+    }
+    function lastPathSegment(input) {
+      const trimmed = input.replace(/\/+$/, "");
+      const segs = trimmed.split("/");
+      return segs[segs.length - 1] || trimmed;
+    }
+    function resolveWork(pkg, label) {
+      const targets = (0, validate_1.normalizeTargetRef)(pkg.target, label);
+      const podTargets = (0, validate_1.normalizeTargetRef)(pkg.podTarget, `${label}.podTarget`);
+      const defaultedToMain = targets === void 0 && podTargets === void 0;
+      return { pkg, targets, podTargets, defaultedToMain };
+    }
     exports2.spmGenerator = {
       name: "swiftPackages",
       generate({ manifest }) {
@@ -1280,32 +1401,60 @@ var require_spm = __commonJS({
         if (!slice) {
           return { ops: [] };
         }
-        const remote = (0, validate_1.normalizeRemotePackages)(slice.remote);
-        const local = (0, validate_1.normalizeLocalPackages)(slice.local);
+        const remote = (0, validate_1.normalizeRemotePackages)(slice.remote).map((pkg, i) => resolveWork(pkg, `swiftPackages.remote[${i}]`));
+        const local = (0, validate_1.normalizeLocalPackages)(slice.local).map((pkg, i) => resolveWork(pkg, `swiftPackages.local[${i}]`));
         if (remote.length === 0 && local.length === 0) {
           return { ops: [] };
         }
-        return {
-          ops: [
-            (0, ios_xcode_1.pbxOp)("swiftPackages", ({ project }) => {
-              for (const pkg of remote) {
-                const ref = xcode_1.XCRemoteSwiftPackageReference.create(project, {
-                  repositoryURL: pkg.url,
-                  requirement: pkg.requirement
-                });
-                addPackageReference(project, ref);
-                linkProducts(project, ref, pkg.products, pkg.target);
-              }
-              for (const pkg of local) {
-                const ref = xcode_1.XCLocalSwiftPackageReference.create(project, {
-                  relativePath: pkg.path
-                });
-                addPackageReference(project, ref);
-                linkProducts(project, ref, pkg.products, pkg.target);
-              }
-            })
-          ]
-        };
+        const ops = [];
+        const anyMainProjectWork = remote.some((w) => w.targets || w.defaultedToMain) || local.some((w) => w.targets || w.defaultedToMain);
+        if (anyMainProjectWork) {
+          ops.push((0, ios_xcode_1.pbxOp)("swiftPackages", ({ project }) => {
+            for (const { pkg, targets, defaultedToMain } of remote) {
+              if (!targets && !defaultedToMain)
+                continue;
+              const ref = xcode_1.XCRemoteSwiftPackageReference.create(project, {
+                repositoryURL: pkg.url,
+                requirement: pkg.requirement
+              });
+              addPackageReference(project, ref);
+              linkProducts(project, ref, pkg.products, targets);
+            }
+            for (const { pkg, targets, defaultedToMain } of local) {
+              if (!targets && !defaultedToMain)
+                continue;
+              const ref = xcode_1.XCLocalSwiftPackageReference.create(project, {
+                relativePath: pkg.path
+              });
+              addPackageReference(project, ref);
+              linkProducts(project, ref, pkg.products, targets);
+            }
+          }));
+        }
+        for (const { pkg, podTargets } of remote) {
+          if (!podTargets)
+            continue;
+          ops.push(podTargetSpmOp({
+            slug: slugify(lastPathSegment(pkg.url)),
+            identifier: pkg.url,
+            kind: "remote",
+            requirement: pkg.requirement,
+            products: pkg.products,
+            podTargets
+          }));
+        }
+        for (const { pkg, podTargets } of local) {
+          if (!podTargets)
+            continue;
+          ops.push(podTargetSpmOp({
+            slug: slugify(lastPathSegment(pkg.path)),
+            identifier: pkg.path,
+            kind: "local",
+            products: pkg.products,
+            podTargets
+          }));
+        }
+        return { ops };
       }
     };
   }
@@ -1316,7 +1465,7 @@ var require_build5 = __commonJS({
   "packages/@expo-workspaces/ios-spm/build/index.js"(exports2) {
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.normalizeLocalPackages = exports2.normalizeRemotePackages = exports2.spmGenerator = void 0;
+    exports2.normalizeTargetRef = exports2.normalizeLocalPackages = exports2.normalizeRemotePackages = exports2.spmGenerator = void 0;
     var spm_1 = require_spm();
     Object.defineProperty(exports2, "spmGenerator", { enumerable: true, get: function() {
       return spm_1.spmGenerator;
@@ -1327,6 +1476,9 @@ var require_build5 = __commonJS({
     } });
     Object.defineProperty(exports2, "normalizeLocalPackages", { enumerable: true, get: function() {
       return validate_1.normalizeLocalPackages;
+    } });
+    Object.defineProperty(exports2, "normalizeTargetRef", { enumerable: true, get: function() {
+      return validate_1.normalizeTargetRef;
     } });
   }
 });

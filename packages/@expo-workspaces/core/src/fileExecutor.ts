@@ -52,6 +52,27 @@ function applyFileOps(platform: 'ios' | 'android', ops: FileOp[]): ConfigPlugin 
             });
             let contents: string;
             if (!result.didMerge && !result.didClear) {
+              // `mergeContents` reports `{ didMerge: false, didClear: false }`
+              // in two distinct situations and the existing code conflated
+              // them, throwing on the harmless one:
+              //
+              //   (a) the file already contains a block with the same tag AND
+              //       the same `sync-<hash>` header — i.e. the previous run
+              //       already wrote exactly this content. Re-running prebuild
+              //       without `--clean` lands here; it's a no-op.
+              //
+              //   (b) the anchor regex really does not match AND no existing
+              //       tagged block is present — the genuine failure mode.
+              //
+              // Detect (a) by looking for the begin marker that mergeContents
+              // would have written. The marker shape is documented in
+              // @expo/config-plugins' generateCode:
+              //   `<comment> @generated begin <tag>`
+              const beginMarker = `${op.comment} @generated begin ${op.tag}`;
+              if (original.includes(beginMarker)) {
+                reportSkip(op.label, filePath);
+                continue;
+              }
               if (!op.appendIfNoAnchor) {
                 throw new Error(`${ERR} ${op.label}: anchor ${op.anchor} not found in ${filePath}.`);
               }
