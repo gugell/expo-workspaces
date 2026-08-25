@@ -1,0 +1,17 @@
+name: Compatibility
+description: Breakage on an Expo SDK, Xcode, or @bacons/xcode version
+title: "[compat] "
+labels: ["compatibility"]
+body:
+  - type: input
+    id: expo
+    attributes:
+      label: Expo SDK
+  - type: input
+    id: xcode
+    attributes:
+      label: Xcode / @bacons/xcode
+  - type: textarea
+    id: log
+    attributes:
+      label: Logs

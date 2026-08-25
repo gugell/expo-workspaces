@@ -1,0 +1,12 @@
+name: Proposal
+description: RFC for a public schema or CLI change
+title: "[proposal] "
+labels: ["proposal"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: Motivation, proposed config shape, migration for existing workspace.config.ts files.
+    validations:
+      required: true

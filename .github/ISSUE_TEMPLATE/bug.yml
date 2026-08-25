@@ -1,0 +1,21 @@
+name: Bug
+description: Something generated incorrectly or failed during prebuild
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproducible fixture
+      description: Prefer a minimal workspace.config.ts and the expo-workspaces plan --json output.
+    validations:
+      required: true
+  - type: input
+    id: sdk
+    attributes:
+      label: Expo SDK
+      placeholder: "56"
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected vs actual

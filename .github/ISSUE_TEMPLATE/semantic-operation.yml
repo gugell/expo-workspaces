@@ -1,0 +1,21 @@
+name: Semantic operation
+description: Propose a new declarative native operation
+title: "[operation] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: intent
+    attributes:
+      label: Application-level native intent
+      description: What does the developer want, in one sentence? Not a pbxproj patch.
+    validations:
+      required: true
+  - type: checkboxes
+    id: bar
+    attributes:
+      label: Decision bar
+      options:
+        - label: Teams currently maintain a custom plugin or manual native edit for this
+        - label: It can be expressed semantically and made idempotent
+        - label: plan can explain it and doctor can validate it
+        - label: Expo does not already provide a better first-party abstraction
