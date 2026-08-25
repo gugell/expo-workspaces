@@ -1,5 +1,5 @@
 import type { XcodeProject } from '@bacons/xcode';
-import type { BaseOp, Op } from '@expo-workspaces/core';
+import type { BaseOp, Op, OpMeta } from '@expo-workspaces/core';
 
 export interface PbxApplyContext {
   project: XcodeProject;
@@ -21,6 +21,6 @@ export function isPbxOp(op: Op): op is PbxOp {
   return op.kind === 'pbx';
 }
 
-export function pbxOp(label: string, apply: (ctx: PbxApplyContext) => void): PbxOp {
-  return { kind: 'pbx', label, apply };
+export function pbxOp(label: string, apply: (ctx: PbxApplyContext) => void, meta?: OpMeta): PbxOp {
+  return { kind: 'pbx', label, apply, meta };
 }

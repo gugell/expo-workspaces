@@ -1,5 +1,38 @@
 import type { ConfigPlugin } from '@expo/config-plugins';
 
+export type OpPlatform = 'ios' | 'android' | 'shared';
+export type OpStatus = 'add' | 'update' | 'remove' | 'noop';
+export type OpRisk = 'low' | 'medium' | 'high' | 'escape-hatch';
+
+/** Serializable semantic envelope. Executor `kind` stays the routing key. */
+export interface OpMeta {
+  id: string;
+  platform: OpPlatform;
+  semanticKind: string;
+  source: string;
+  status: OpStatus;
+  files?: string[];
+  risk?: OpRisk;
+  desired?: unknown;
+  current?: unknown;
+  phase?: string;
+}
+
+export interface PlanOperation {
+  id: string;
+  platform: OpPlatform;
+  kind: string;
+  source: string;
+  status: OpStatus;
+  label: string;
+  files?: string[];
+  risk?: OpRisk;
+  desired?: unknown;
+  current?: unknown;
+  phase?: string;
+  executorKind: string;
+}
+
 /**
  * Minimal structural view of the resolved Expo config that generators read.
  * Loose (index signature) so an `ExpoConfig` is structurally assignable.
@@ -24,9 +57,14 @@ export interface WorkspaceAppConfig {
   [key: string]: unknown;
 }
 
-/** The raw manifest object as authored (validated per-generator). */
+/**
+ * Generator-facing canonical config. Always flat (the shape existing
+ * generators already read). Nested `workspace.config.ts` is flattened by
+ * `normalizeWorkspaceConfig` before it reaches this type.
+ */
 export interface RawManifest {
   manifestVersion: 1;
+  schemaVersion?: 1;
   [key: string]: unknown;
 }
 
@@ -37,6 +75,8 @@ export type FileBase = 'ios' | 'android' | 'project';
 export interface BaseOp {
   kind: string;
   label: string;
+  /** Semantic envelope used by plan / doctor / JSON. Executor `kind` is unchanged. */
+  meta?: OpMeta;
 }
 
 export interface WriteFileOp extends BaseOp {
@@ -86,11 +126,13 @@ export function isFileOp(op: BaseOp): op is FileOp {
 export type Op = BaseOp;
 
 export interface GeneratorContext {
-  /** Raw manifest object; each generator validates and reads its own slice. */
+  /** Canonical (flattened) manifest; each generator validates and reads its own slice. */
   manifest: RawManifest;
   config: WorkspaceAppConfig;
   /** Absolute path to the app project root. */
   projectRoot: string;
+  /** Absolute path of the loaded workspace config file. */
+  configPath: string;
 }
 
 export interface GeneratorResult {

@@ -7,6 +7,7 @@ import {
   XcodeProject,
 } from '@bacons/xcode';
 import type { Generator, MergeBlockOp, Op } from '@expo-workspaces/core';
+import { withMeta } from '@expo-workspaces/core';
 import { pbxOp } from '@expo-workspaces/ios-xcode';
 
 import type {
@@ -167,17 +168,28 @@ function renderPodTargetSpmRuby(spec: PodTargetSpmDescriptor): string {
 }
 
 function podTargetSpmOp(spec: PodTargetSpmDescriptor): MergeBlockOp {
-  return {
-    kind: 'mergeBlock',
-    base: 'ios',
-    path: 'Podfile',
-    tag: `expo-workspaces-spm-pod-target-${spec.slug}`,
-    newSrc: renderPodTargetSpmRuby(spec),
-    anchor: POD_TARGET_ANCHOR,
-    offset: 1,
-    comment: '#',
-    label: `swiftPackages:podTarget:${spec.slug}`,
-  };
+  return withMeta(
+    {
+      kind: 'mergeBlock',
+      base: 'ios',
+      path: 'Podfile',
+      tag: `expo-workspaces-spm-pod-target-${spec.slug}`,
+      newSrc: renderPodTargetSpmRuby(spec),
+      anchor: POD_TARGET_ANCHOR,
+      offset: 1,
+      comment: '#',
+      label: `swiftPackages:podTarget:${spec.slug}`,
+    },
+    {
+      id: `swiftPackage:podTarget:${spec.slug}`,
+      platform: 'ios',
+      semanticKind: 'ios.swiftPackage.link',
+      source: 'ios.packages',
+      status: 'add',
+      files: ['ios/Podfile'],
+      desired: spec,
+    },
+  );
 }
 
 function lastPathSegment(input: string): string {
@@ -234,7 +246,9 @@ export const spmGenerator: Generator = {
 
     if (anyMainProjectWork) {
       ops.push(
-        pbxOp('swiftPackages', ({ project }) => {
+        pbxOp(
+          'swiftPackages',
+          ({ project }) => {
           for (const { pkg, targets, defaultedToMain } of remote) {
             if (!targets && !defaultedToMain) continue;
             const ref = XCRemoteSwiftPackageReference.create(project, {
@@ -252,7 +266,21 @@ export const spmGenerator: Generator = {
             addPackageReference(project, ref);
             linkProducts(project, ref, pkg.products, targets);
           }
-        }),
+          },
+          {
+            id: 'swiftPackage:project',
+            platform: 'ios',
+            semanticKind: 'ios.swiftPackage.add',
+            source: 'ios.packages',
+            status: 'add',
+            files: ['ios/*.xcodeproj/project.pbxproj'],
+            desired: {
+              remote: remote.map((w) => w.pkg.url),
+              local: local.map((w) => w.pkg.path),
+            },
+            phase: 'finalized',
+          },
+        ),
       );
     }
 

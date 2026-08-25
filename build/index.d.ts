@@ -1,13 +1,21 @@
 // Public type surface for the bundled `expo-workspaces` package.
-import type { WorkspaceManifest } from './types';
+import type { SpmLocalPackage, SpmRemotePackage, TargetSpec, WorkspaceConfig, WorkspaceManifest } from './types';
+import type { SchemeDefinition } from './types';
 
 export * from './types';
 
-/** Identity helper for authoring `workspace.manifest.js` with autocomplete. */
-export declare function defineWorkspace(manifest: WorkspaceManifest): WorkspaceManifest;
+export declare function defineWorkspace<T extends WorkspaceConfig | WorkspaceManifest>(config: T): T;
+export declare function shareExtension(spec: Omit<TargetSpec, 'type'>): TargetSpec;
+export declare function widgetExtension(spec: Omit<TargetSpec, 'type'>): TargetSpec;
+export declare function appClip(spec: Omit<TargetSpec, 'type'>): TargetSpec;
+export declare function swiftPackage(spec: SpmRemotePackage): SpmRemotePackage;
+export declare function localSwiftPackage(spec: SpmLocalPackage): SpmLocalPackage;
+export declare function scheme(spec: SchemeDefinition): SchemeDefinition;
 
 export interface WithWorkspaceProps {
-  /** Path to the manifest, relative to the app root. Defaults to `workspace.manifest.js`. */
+  /** Path to the workspace config, relative to the app root. */
+  configPath?: string;
+  /** @deprecated Use configPath. */
   manifestPath?: string;
 }
 

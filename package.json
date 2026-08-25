@@ -1,7 +1,7 @@
 {
   "name": "expo-workspaces",
-  "version": "1.0.0",
-  "description": "Declarative, manifest-first iOS + Android workspace generation for Expo CNG. Composable config-plugin capabilities bundled into one Expo plugin.",
+  "version": "0.1.0",
+  "description": "Native projects as code for Expo. Declarative targets, packages, schemes, and Android config for CNG.",
   "license": "MIT",
   "author": "gugell",
   "repository": {
@@ -21,12 +21,14 @@
     "xcode",
     "ios",
     "android",
-    "manifest",
     "declarative",
     "workspace"
   ],
   "main": "app.plugin.js",
   "types": "build/index.d.ts",
+  "bin": {
+    "expo-workspaces": "./bin/expo-workspaces.js"
+  },
   "exports": {
     ".": {
       "types": "./build/index.d.ts",
@@ -39,6 +41,7 @@
   },
   "files": [
     "app.plugin.js",
+    "bin",
     "build",
     "README.md",
     "LICENSE"
@@ -49,11 +52,14 @@
     "bundle": "node scripts/bundle.mjs",
     "watch": "tsc -b --watch",
     "clean": "tsc -b --clean && node -e \"require('fs').rmSync('build',{recursive:true,force:true})\"",
-    "prepack": "pnpm build"
+    "prepack": "pnpm build",
+    "test": "tsx --test tests/**/*.test.ts",
+    "typecheck": "tsc -b --pretty false"
   },
   "dependencies": {
     "@bacons/xcode": "1.0.0-alpha.32",
-    "@expo/plist": "0.7.0"
+    "@expo/plist": "0.7.0",
+    "jiti": "^1.21.7"
   },
   "peerDependencies": {
     "@expo/config-plugins": ">=56.0.0",
@@ -67,6 +73,7 @@
     "@expo/config-plugins": "^56.0.0",
     "@types/node": "^22.10.0",
     "esbuild": "^0.24.2",
+    "tsx": "^4.19.2",
     "typescript": "~5.9.2"
   },
   "engines": {

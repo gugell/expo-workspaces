@@ -1,4 +1,5 @@
 import type { Generator, MergeBlockOp } from '@expo-workspaces/core';
+import { withMeta } from '@expo-workspaces/core';
 
 import type { XcodeEnvSpec } from '../types';
 
@@ -53,6 +54,18 @@ export const xcodeEnvGenerator: Generator = {
       appendIfNoAnchor: true,
       label: 'xcodeEnv',
     };
-    return { ops: [op] };
+    return {
+      ops: [
+        withMeta(op, {
+          id: 'xcode.env',
+          platform: 'ios',
+          semanticKind: 'ios.xcode.env.set',
+          source: 'ios.xcode.env',
+          status: 'update',
+          files: ['ios/.xcode.env'],
+          desired: spec,
+        }),
+      ],
+    };
   },
 };

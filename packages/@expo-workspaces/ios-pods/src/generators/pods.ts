@@ -1,4 +1,4 @@
-import { nameMatcherToRuby, rubyLiteral } from '@expo-workspaces/core';
+import { nameMatcherToRuby, rubyLiteral, withMeta } from '@expo-workspaces/core';
 import type { Generator, MergeBlockOp, Op } from '@expo-workspaces/core';
 
 import {
@@ -113,25 +113,68 @@ export const podsGenerator: Generator = {
 
     const ops: Op[] = [];
     if (localPods.length > 0) {
-      ops.push(mergeBlock(LOCAL_PODS_TAG, localPodLines(localPods), USE_EXPO_MODULES, 'localPods'));
+      ops.push(
+        withMeta(mergeBlock(LOCAL_PODS_TAG, localPodLines(localPods), USE_EXPO_MODULES, 'localPods'), {
+          id: 'pod:local',
+          platform: 'ios',
+          semanticKind: 'ios.pod.add',
+          source: 'ios.pods',
+          status: 'add',
+          files: ['ios/Podfile'],
+          desired: localPods,
+        }),
+      );
     }
     if (remotePods.length > 0) {
       ops.push(
-        mergeBlock(REMOTE_PODS_TAG, remotePods.map(remotePodLine).join('\n'), USE_EXPO_MODULES, 'remotePods'),
+        withMeta(
+          mergeBlock(REMOTE_PODS_TAG, remotePods.map(remotePodLine).join('\n'), USE_EXPO_MODULES, 'remotePods'),
+          {
+            id: 'pod:remote',
+            platform: 'ios',
+            semanticKind: 'ios.pod.add',
+            source: 'ios.pods',
+            status: 'add',
+            files: ['ios/Podfile'],
+            desired: remotePods,
+          },
+        ),
       );
     }
     if (podBuildSettings.length > 0) {
       ops.push(
-        mergeBlock(POD_BUILD_SETTINGS_TAG, podBuildSettingsLines(podBuildSettings), POST_INSTALL, 'podBuildSettings'),
+        withMeta(
+          mergeBlock(POD_BUILD_SETTINGS_TAG, podBuildSettingsLines(podBuildSettings), POST_INSTALL, 'podBuildSettings'),
+          {
+            id: 'pod:buildSettings',
+            platform: 'ios',
+            semanticKind: 'ios.pod.buildSetting.set',
+            source: 'ios.podBuildSettings',
+            status: 'update',
+            files: ['ios/Podfile'],
+            desired: podBuildSettings,
+          },
+        ),
       );
     }
     if (removePodBuildPhases.length > 0) {
       ops.push(
-        mergeBlock(
-          POD_REMOVE_BUILD_PHASES_TAG,
-          podRemoveBuildPhasesLines(removePodBuildPhases),
-          POST_INSTALL,
-          'removePodBuildPhases',
+        withMeta(
+          mergeBlock(
+            POD_REMOVE_BUILD_PHASES_TAG,
+            podRemoveBuildPhasesLines(removePodBuildPhases),
+            POST_INSTALL,
+            'removePodBuildPhases',
+          ),
+          {
+            id: 'pod:removeBuildPhases',
+            platform: 'ios',
+            semanticKind: 'ios.pod.buildPhase.remove',
+            source: 'ios.removePodBuildPhases',
+            status: 'remove',
+            files: ['ios/Podfile'],
+            desired: removePodBuildPhases,
+          },
         ),
       );
     }

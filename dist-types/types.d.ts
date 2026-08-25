@@ -126,13 +126,15 @@ export interface SpmRemotePackage {
   url: string;
   requirement: SwiftPackageRequirement;
   products: string[];
-  target?: string;
+  target?: string | readonly string[];
+  podTarget?: string | readonly string[];
 }
 
 export interface SpmLocalPackage {
   path: string;
   products: string[];
-  target?: string;
+  target?: string | readonly string[];
+  podTarget?: string | readonly string[];
 }
 
 export interface IosSpmManifest {
@@ -182,12 +184,18 @@ export interface PatchManifest {
 }
 
 // ─── Android ────────────────────────────────────────────────────────────────
+export interface EnvRef {
+  env: string;
+}
+export type SecretInput = string | EnvRef;
+
 export interface AndroidSigningConfig {
   /** Keystore path relative to android/app. */
   storeFile: string;
-  storePassword: string;
+  /** Literal, `env:VAR`, or `{ env: "VAR" }`. Prefer env refs. */
+  storePassword?: SecretInput;
   keyAlias: string;
-  keyPassword: string;
+  keyPassword?: SecretInput;
 }
 
 export interface AndroidSlice {
@@ -209,9 +217,38 @@ export interface AndroidManifestSlice {
 }
 
 // ─── Composed manifest ──────────────────────────────────────────────────────
-export type WorkspaceManifest = { manifestVersion: 1 } & IosPodsManifest &
+export type WorkspaceManifest = { manifestVersion: 1; schemaVersion?: 1 } & IosPodsManifest &
   IosXcodeManifest &
   IosTargetsManifest &
   IosSpmManifest &
   PatchManifest &
   AndroidManifestSlice;
+
+export interface IOSWorkspaceConfig {
+  deploymentTarget?: string;
+  targetsRoot?: string;
+  targets?: TargetSpec[];
+  packages?: Array<SpmRemotePackage | SpmLocalPackage>;
+  pods?: Array<LocalPodDeclaration | RemotePodDeclaration>;
+  localPods?: LocalPodDeclaration[];
+  remotePods?: RemotePodDeclaration[];
+  podBuildSettings?: PodBuildSettingsRule[];
+  removePodBuildPhases?: PodRemoveBuildPhaseRule[];
+  schemes?: SchemeDefinition[];
+  replaceExpoScheme?: boolean;
+  xcode?: {
+    env?: XcodeEnvSpec;
+    buildSettings?: Record<string, string>;
+  };
+  xcodeEnv?: XcodeEnvSpec;
+  fixExtensionEmbedCycle?: boolean;
+  swiftPackages?: IosSpmManifest['swiftPackages'];
+}
+
+export type WorkspaceConfig = {
+  schemaVersion?: 1;
+  manifestVersion?: 1;
+  ios?: IOSWorkspaceConfig;
+  android?: AndroidSlice;
+  patches?: FilePatch[];
+} & Partial<WorkspaceManifest>;

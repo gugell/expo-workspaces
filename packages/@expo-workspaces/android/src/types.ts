@@ -1,11 +1,12 @@
-import type { BaseOp, Op } from '@expo-workspaces/core';
+import type { BaseOp, Op, SecretInput } from '@expo-workspaces/core';
 
 export interface AndroidSigningConfig {
   /** Keystore path relative to android/app (e.g. "release.keystore"). */
   storeFile: string;
-  storePassword: string;
+  /** Literal, `env:VAR`, or `{ env: "VAR" }`. Prefer env refs. */
+  storePassword?: SecretInput;
   keyAlias: string;
-  keyPassword: string;
+  keyPassword?: SecretInput;
 }
 
 export interface AndroidSlice {

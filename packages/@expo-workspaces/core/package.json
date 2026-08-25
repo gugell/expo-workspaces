@@ -1,6 +1,6 @@
 {
   "name": "@expo-workspaces/core",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "private": true,
   "description": "Engine for declarative, manifest-driven Expo CNG workspace generation: op model, generator/executor registry, and the workspace plugin factory.",
   "license": "MIT",

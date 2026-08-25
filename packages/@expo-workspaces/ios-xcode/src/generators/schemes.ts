@@ -29,7 +29,9 @@ export const schemesGenerator: Generator = {
 
     return {
       ops: [
-        pbxOp('schemes', ({ project }) => {
+        pbxOp(
+          'schemes',
+          ({ project }) => {
           const app = project.rootObject.getMainAppTarget('ios');
           if (!app) {
             throw new Error(
@@ -68,7 +70,18 @@ export const schemesGenerator: Generator = {
 
             project.saveScheme(xcscheme, { shared: true });
           }
-        }),
+        },
+          {
+            id: 'scheme:all',
+            platform: 'ios',
+            semanticKind: 'ios.scheme.add',
+            source: 'ios.schemes',
+            status: 'add',
+            files: ['ios/*.xcodeproj/xcshareddata/xcschemes'],
+            desired: schemes.map((s) => s.name),
+            phase: 'finalized',
+          },
+        ),
       ],
     };
   },

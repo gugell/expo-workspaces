@@ -1,14 +1,23 @@
 import { createRunOncePlugin } from '@expo/config-plugins';
 
-import { defineWorkspace } from './defineWorkspace';
+import { defineWorkspace } from './helpers';
 import { withWorkspace } from './withWorkspace';
 
-const plugin = createRunOncePlugin(withWorkspace, 'expo-workspaces', '1.0.0');
+const plugin = createRunOncePlugin(withWorkspace, 'expo-workspaces', '0.1.0');
 
 export default plugin;
-export { withWorkspace, defineWorkspace };
+export { withWorkspace };
+export {
+  defineWorkspace,
+  shareExtension,
+  widgetExtension,
+  appClip,
+  swiftPackage,
+  localSwiftPackage,
+  scheme,
+} from './helpers';
+export type { WorkspaceManifest, WorkspaceConfig, IOSWorkspaceConfig } from './types';
 export type {
-  WorkspaceManifest,
   IosPodsManifest,
   IosXcodeManifest,
   IosTargetsManifest,

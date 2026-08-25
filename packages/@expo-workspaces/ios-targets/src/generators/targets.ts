@@ -8,6 +8,7 @@ import type {
   WorkspaceAppConfig,
   WriteFileOp,
 } from '@expo-workspaces/core';
+import { withMeta } from '@expo-workspaces/core';
 import { pbxOp } from '@expo-workspaces/ios-xcode';
 
 import { resolveTargetBundleId } from '../bundleId';
@@ -154,41 +155,77 @@ export const targetsGenerator: Generator = {
 
     const ops: Op[] = [];
 
-    for (const { spec, sourceRel, plan, entitlementsJson } of resolved) {
-      const infoPlistOp: WriteFileOp = {
-        kind: 'writeFile',
-        base: 'project',
-        path: `${sourceRel}/Info.plist`,
-        contents: buildInfoPlist(spec.type),
-        overwrite: 'ifAbsent',
-        label: `target:${spec.name}:Info.plist`,
-      };
-      ops.push(infoPlistOp);
+    resolved.forEach(({ spec, sourceRel, plan, entitlementsJson }, index) => {
+      const source = `ios.targets[${index}]`;
+      ops.push(
+        withMeta(
+          {
+            kind: 'writeFile',
+            base: 'project',
+            path: `${sourceRel}/Info.plist`,
+            contents: buildInfoPlist(spec.type),
+            overwrite: 'ifAbsent',
+            label: `target:${spec.name}:Info.plist`,
+          } satisfies WriteFileOp,
+          {
+            id: `target:${spec.name}:infoPlist`,
+            platform: 'ios',
+            semanticKind: 'ios.target.infoPlist.write',
+            source,
+            status: 'add',
+            files: [`${sourceRel}/Info.plist`],
+            desired: { type: spec.type },
+          },
+        ),
+      );
       if (entitlementsJson && plan.entitlementsFileName) {
-        const entitlementsOp: WriteFileOp = {
-          kind: 'writeFile',
-          base: 'project',
-          path: `${sourceRel}/${plan.entitlementsFileName}`,
-          contents: buildEntitlements(entitlementsJson),
-          overwrite: 'always',
-          label: `target:${spec.name}:entitlements`,
-        };
-        ops.push(entitlementsOp);
+        ops.push(
+          withMeta(
+            {
+              kind: 'writeFile',
+              base: 'project',
+              path: `${sourceRel}/${plan.entitlementsFileName}`,
+              contents: buildEntitlements(entitlementsJson),
+              overwrite: 'always',
+              label: `target:${spec.name}:entitlements`,
+            } satisfies WriteFileOp,
+            {
+              id: `target:${spec.name}:entitlements`,
+              platform: 'ios',
+              semanticKind: 'ios.entitlement.set',
+              source,
+              status: 'add',
+              files: [`${sourceRel}/${plan.entitlementsFileName}`],
+              desired: entitlementsJson,
+            },
+          ),
+        );
       }
-    }
+    });
 
     // Podfile loader that wires each target's pods.rb file (kept for back-compat with
     // the @bacons/apple-targets convention). Manifest-declared `pods` below are
     // preferred — drop pods.rb if you migrate to the manifest.
-    const loaderOp: AppendOnceOp = {
-      kind: 'appendOnce',
-      base: 'ios',
-      path: 'Podfile',
-      marker: TARGETS_LOADER_MARKER,
-      contents: buildTargetsPodfileLoader(targetsRootClean),
-      label: 'targetsPodfileLoader',
-    };
-    ops.push(loaderOp);
+    ops.push(
+      withMeta(
+        {
+          kind: 'appendOnce',
+          base: 'ios',
+          path: 'Podfile',
+          marker: TARGETS_LOADER_MARKER,
+          contents: buildTargetsPodfileLoader(targetsRootClean),
+          label: 'targetsPodfileLoader',
+        } satisfies AppendOnceOp,
+        {
+          id: 'target:podfileLoader',
+          platform: 'ios',
+          semanticKind: 'ios.pod.loader.add',
+          source: 'ios.targets',
+          status: 'add',
+          files: ['ios/Podfile'],
+        },
+      ),
+    );
 
     // Per-target pod blocks declared in the manifest → tagged, idempotent
     // `target '<name>' do … end` mergeBlocks. Anchored on the loader marker (we
@@ -197,30 +234,61 @@ export const targetsGenerator: Generator = {
     // template `post_install` lives INSIDE the main target, which would nest our
     // block and cause CocoaPods to inherit the main app's full pod graph
     // (Expo modules, RN, Hermes, …) into the extension.
-    for (const { spec } of resolved) {
-      if (!spec.pods?.length) continue;
-      const op: MergeBlockOp = {
-        kind: 'mergeBlock',
-        base: 'ios',
-        path: 'Podfile',
-        tag: `expo-workspaces-target-pods-${spec.name}`,
-        newSrc: buildTargetPodsBlock(spec.name, spec.pods),
-        anchor: new RegExp(TARGETS_LOADER_MARKER),
-        offset: 0,
-        comment: '#',
-        label: `target:${spec.name}:pods`,
-      };
-      ops.push(op);
-    }
+    resolved.forEach(({ spec }, index) => {
+      if (!spec.pods?.length) return;
+      ops.push(
+        withMeta(
+          {
+            kind: 'mergeBlock',
+            base: 'ios',
+            path: 'Podfile',
+            tag: `expo-workspaces-target-pods-${spec.name}`,
+            newSrc: buildTargetPodsBlock(spec.name, spec.pods),
+            anchor: new RegExp(TARGETS_LOADER_MARKER),
+            offset: 0,
+            comment: '#',
+            label: `target:${spec.name}:pods`,
+          } satisfies MergeBlockOp,
+          {
+            id: `target:${spec.name}:pods`,
+            platform: 'ios',
+            semanticKind: 'ios.pod.add',
+            source: `ios.targets[${index}].pods`,
+            status: 'add',
+            files: ['ios/Podfile'],
+            desired: spec.pods,
+          },
+        ),
+      );
+    });
 
     // One pbx op creates all targets then syncs team id + marketing version.
     const plans = resolved.map((r) => r.plan);
     const teamId = config.ios?.appleTeamId;
     const marketingVersion = config.ios?.version || config.version || '1.0.0';
     ops.push(
-      pbxOp('targets', ({ project }) => {
-        applyTargetsPbx(project, plans, { teamId, marketingVersion });
-      }),
+      pbxOp(
+        'targets',
+        ({ project }) => {
+          applyTargetsPbx(project, plans, { teamId, marketingVersion });
+        },
+        {
+          id: 'target:all',
+          platform: 'ios',
+          semanticKind: 'ios.target.add',
+          source: 'ios.targets',
+          status: 'add',
+          files: ['ios/*.xcodeproj/project.pbxproj'],
+          desired: resolved.map(({ spec, plan }, index) => ({
+            source: `ios.targets[${index}]`,
+            name: spec.name,
+            type: spec.type,
+            bundleIdentifier: plan.bundleId,
+            deploymentTarget: plan.deploymentTarget,
+          })),
+          phase: 'finalized',
+        },
+      ),
     );
 
     return { ops };

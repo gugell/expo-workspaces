@@ -1,6 +1,6 @@
 {
   "name": "@expo-workspaces/meta",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "private": true,
   "description": "Internal composition package (bundle source) for expo-workspaces. Composes the @expo-workspaces/* capability generators; bundled into the root `expo-workspaces` package for distribution.",
   "license": "MIT",

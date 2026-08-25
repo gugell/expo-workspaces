@@ -1,4 +1,4 @@
-import { ERR } from '@expo-workspaces/core';
+import { ERR, withMeta } from '@expo-workspaces/core';
 import type { Generator, MergeBlockOp, Op } from '@expo-workspaces/core';
 
 import type { FilePatch, PatchOp } from '../types';
@@ -84,7 +84,21 @@ export const patchGenerator: Generator = {
     }
     const ops: Op[] = [];
     patches.forEach((patch, index) => {
-      ops.push(...buildOpsForPatch(patch, index));
+      const source = `patches[${index}]`;
+      for (const op of buildOpsForPatch(patch, index)) {
+        ops.push(
+          withMeta(op, {
+            id: `patch:${index}:${op.label}`,
+            platform: patch.base === 'android' ? 'android' : 'ios',
+            semanticKind: 'patch.file',
+            source,
+            status: 'update',
+            files: [patch.file],
+            risk: 'escape-hatch',
+            desired: { file: patch.file, base: patch.base },
+          }),
+        );
+      }
     });
     return { ops };
   },

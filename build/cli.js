@@ -29,13 +29,13 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 var require_appConfig = __commonJS({
   "packages/@expo-workspaces/core/build/appConfig.js"(exports2) {
     "use strict";
-    var __importDefault = exports2 && exports2.__importDefault || function(mod) {
+    var __importDefault2 = exports2 && exports2.__importDefault || function(mod) {
       return mod && mod.__esModule ? mod : { "default": mod };
     };
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.loadAppConfig = loadAppConfig;
-    var fs_1 = __importDefault(require("fs"));
-    var path_1 = __importDefault(require("path"));
+    var fs_1 = __importDefault2(require("fs"));
+    var path_12 = __importDefault2(require("path"));
     function loadAppConfig(projectRoot) {
       try {
         const { getConfig } = require("@expo/config");
@@ -43,14 +43,14 @@ var require_appConfig = __commonJS({
       } catch {
       }
       for (const name of ["app.json", "app.config.json"]) {
-        const file = path_1.default.join(projectRoot, name);
+        const file = path_12.default.join(projectRoot, name);
         if (!fs_1.default.existsSync(file))
           continue;
         const parsed = JSON.parse(fs_1.default.readFileSync(file, "utf8"));
         return parsed.expo ?? parsed;
       }
       for (const name of ["app.config.js", "app.config.cjs"]) {
-        const file = path_1.default.join(projectRoot, name);
+        const file = path_12.default.join(projectRoot, name);
         if (!fs_1.default.existsSync(file))
           continue;
         delete require.cache[require.resolve(file)];
@@ -59,7 +59,7 @@ var require_appConfig = __commonJS({
         const obj = value;
         return obj.expo ?? obj;
       }
-      return { name: path_1.default.basename(projectRoot) };
+      return { name: path_12.default.basename(projectRoot) };
     }
   }
 });
@@ -237,15 +237,15 @@ var require_normalize = __commonJS({
 var require_loadConfig = __commonJS({
   "packages/@expo-workspaces/core/build/loadConfig.js"(exports2) {
     "use strict";
-    var __importDefault = exports2 && exports2.__importDefault || function(mod) {
+    var __importDefault2 = exports2 && exports2.__importDefault || function(mod) {
       return mod && mod.__esModule ? mod : { "default": mod };
     };
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.DEFAULT_MANIFEST_FILENAME = exports2.DEFAULT_CONFIG_FILENAMES = void 0;
     exports2.resolveConfigPath = resolveConfigPath;
     exports2.loadWorkspaceConfig = loadWorkspaceConfig;
-    var fs_1 = __importDefault(require("fs"));
-    var path_1 = __importDefault(require("path"));
+    var fs_1 = __importDefault2(require("fs"));
+    var path_12 = __importDefault2(require("path"));
     var normalize_1 = require_normalize();
     var validation_1 = require_validation();
     exports2.DEFAULT_CONFIG_FILENAMES = [
@@ -259,20 +259,20 @@ var require_loadConfig = __commonJS({
     exports2.DEFAULT_MANIFEST_FILENAME = "workspace.manifest.js";
     function resolveConfigPath(projectRoot, configPath) {
       if (configPath) {
-        return path_1.default.resolve(projectRoot, configPath);
+        return path_12.default.resolve(projectRoot, configPath);
       }
       for (const name of exports2.DEFAULT_CONFIG_FILENAMES) {
-        const candidate = path_1.default.resolve(projectRoot, name);
+        const candidate = path_12.default.resolve(projectRoot, name);
         if (fs_1.default.existsSync(candidate)) {
           return candidate;
         }
       }
-      return path_1.default.resolve(projectRoot, exports2.DEFAULT_CONFIG_FILENAMES[0]);
+      return path_12.default.resolve(projectRoot, exports2.DEFAULT_CONFIG_FILENAMES[0]);
     }
     function loadWorkspaceConfig(projectRoot, configPath) {
       const resolved = resolveConfigPath(projectRoot, configPath);
       if (!fs_1.default.existsSync(resolved)) {
-        const searched = configPath ? resolved : exports2.DEFAULT_CONFIG_FILENAMES.map((name) => path_1.default.join(projectRoot, name)).join(", ");
+        const searched = configPath ? resolved : exports2.DEFAULT_CONFIG_FILENAMES.map((name) => path_12.default.join(projectRoot, name)).join(", ");
         throw new Error(`${validation_1.ERR} Workspace config not found. Looked for: ${searched}. Create workspace.config.ts at the app root, or set the "configPath" plugin option.`);
       }
       const exported = loadModule(resolved);
@@ -280,11 +280,11 @@ var require_loadConfig = __commonJS({
       return {
         manifest,
         configPath: resolved,
-        loadedAs: path_1.default.basename(resolved)
+        loadedAs: path_12.default.basename(resolved)
       };
     }
     function loadModule(filePath) {
-      const ext = path_1.default.extname(filePath).toLowerCase();
+      const ext = path_12.default.extname(filePath).toLowerCase();
       try {
         if (ext === ".ts" || ext === ".mts" || ext === ".tsx") {
           return unwrapDefault(loadTypeScript(filePath));
@@ -315,9 +315,9 @@ var require_loadConfig = __commonJS({
     }
     function resolvePackageRoot() {
       try {
-        return path_1.default.dirname(require.resolve("expo-workspaces/package.json"));
+        return path_12.default.dirname(require.resolve("expo-workspaces/package.json"));
       } catch {
-        return path_1.default.resolve(__dirname, "..");
+        return path_12.default.resolve(__dirname, "..");
       }
     }
   }
@@ -668,14 +668,14 @@ var require_plan = __commonJS({
 var require_doctor = __commonJS({
   "packages/@expo-workspaces/core/build/doctor.js"(exports2) {
     "use strict";
-    var __importDefault = exports2 && exports2.__importDefault || function(mod) {
+    var __importDefault2 = exports2 && exports2.__importDefault || function(mod) {
       return mod && mod.__esModule ? mod : { "default": mod };
     };
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.builtinDoctorRules = void 0;
     exports2.runDoctor = runDoctor;
-    var fs_1 = __importDefault(require("fs"));
-    var path_1 = __importDefault(require("path"));
+    var fs_1 = __importDefault2(require("fs"));
+    var path_12 = __importDefault2(require("path"));
     var secrets_1 = require_secrets();
     var MIN_NODE = [20, 19, 4];
     var MIN_EXPO_SDK = 56;
@@ -907,7 +907,7 @@ var require_doctor = __commonJS({
       return 0;
     }
     function readExpoSdk(projectRoot) {
-      const expoPkg = path_1.default.join(projectRoot, "node_modules", "expo", "package.json");
+      const expoPkg = path_12.default.join(projectRoot, "node_modules", "expo", "package.json");
       if (fs_1.default.existsSync(expoPkg)) {
         try {
           const json = JSON.parse(fs_1.default.readFileSync(expoPkg, "utf8"));
@@ -917,7 +917,7 @@ var require_doctor = __commonJS({
           return null;
         }
       }
-      const pkg = path_1.default.join(projectRoot, "package.json");
+      const pkg = path_12.default.join(projectRoot, "package.json");
       if (!fs_1.default.existsSync(pkg))
         return null;
       try {
@@ -972,27 +972,27 @@ var require_types = __commonJS({
 var require_fileExecutor = __commonJS({
   "packages/@expo-workspaces/core/build/fileExecutor.js"(exports2) {
     "use strict";
-    var __importDefault = exports2 && exports2.__importDefault || function(mod) {
+    var __importDefault2 = exports2 && exports2.__importDefault || function(mod) {
       return mod && mod.__esModule ? mod : { "default": mod };
     };
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.fileExecutor = void 0;
-    var fs_1 = __importDefault(require("fs"));
-    var path_1 = __importDefault(require("path"));
-    var config_plugins_12 = require("@expo/config-plugins");
+    var fs_1 = __importDefault2(require("fs"));
+    var path_12 = __importDefault2(require("path"));
+    var config_plugins_1 = require("@expo/config-plugins");
     var generateCode_1 = require("@expo/config-plugins/build/utils/generateCode");
     var report_1 = require_report();
     var types_1 = require_types();
     var ERR = "[expo-workspaces]";
     function applyFileOps(platform, ops) {
-      return (config) => (0, config_plugins_12.withDangerousMod)(config, [
+      return (config) => (0, config_plugins_1.withDangerousMod)(config, [
         platform,
         async (config2) => {
           const { platformProjectRoot, projectRoot } = config2.modRequest;
           const baseDir = (base) => base === "project" ? projectRoot : platformProjectRoot;
           for (const op of ops) {
             if (op.kind === "writeFile") {
-              const filePath = path_1.default.resolve(baseDir(op.base), op.path);
+              const filePath = path_12.default.resolve(baseDir(op.base), op.path);
               if (op.overwrite === "ifAbsent" && fs_1.default.existsSync(filePath)) {
                 (0, report_1.reportSkip)(op.label, filePath);
                 continue;
@@ -1001,13 +1001,13 @@ var require_fileExecutor = __commonJS({
                 (0, report_1.reportSkip)(op.label, filePath);
                 continue;
               }
-              fs_1.default.mkdirSync(path_1.default.dirname(filePath), { recursive: true });
+              fs_1.default.mkdirSync(path_12.default.dirname(filePath), { recursive: true });
               fs_1.default.writeFileSync(filePath, op.contents, "utf8");
               (0, report_1.reportChange)(op.label, filePath);
               continue;
             }
             if (op.kind === "mergeBlock") {
-              const filePath = path_1.default.resolve(baseDir(op.base), op.path);
+              const filePath = path_12.default.resolve(baseDir(op.base), op.path);
               if (!fs_1.default.existsSync(filePath)) {
                 throw new Error(`${ERR} ${op.label}: file not found at ${filePath}.`);
               }
@@ -1047,7 +1047,7 @@ ${op.newSrc}
               continue;
             }
             if (op.kind === "appendOnce") {
-              const filePath = path_1.default.resolve(baseDir(op.base), op.path);
+              const filePath = path_12.default.resolve(baseDir(op.base), op.path);
               if (!fs_1.default.existsSync(filePath)) {
                 throw new Error(`${ERR} ${op.label}: file not found at ${filePath}.`);
               }
@@ -1062,14 +1062,14 @@ ${op.contents}`, "utf8");
               (0, report_1.reportChange)(op.label, filePath);
               continue;
             }
-            const dirPath = path_1.default.resolve(baseDir(op.base), op.dir);
+            const dirPath = path_12.default.resolve(baseDir(op.base), op.dir);
             if (!fs_1.default.existsSync(dirPath)) {
               continue;
             }
             for (const entry of fs_1.default.readdirSync(dirPath)) {
               if (op.match(entry)) {
-                fs_1.default.unlinkSync(path_1.default.join(dirPath, entry));
-                (0, report_1.reportChange)(op.label, path_1.default.join(dirPath, entry));
+                fs_1.default.unlinkSync(path_12.default.join(dirPath, entry));
+                (0, report_1.reportChange)(op.label, path_12.default.join(dirPath, entry));
               }
             }
           }
@@ -1246,7 +1246,7 @@ var require_android = __commonJS({
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.androidGenerator = void 0;
-    var core_1 = require_build();
+    var core_12 = require_build();
     var SIGNING_KEYS = {
       storeFile: "EXPO_WORKSPACE_RELEASE_STORE_FILE",
       storePassword: "EXPO_WORKSPACE_RELEASE_STORE_PASSWORD",
@@ -1254,7 +1254,7 @@ var require_android = __commonJS({
       keyPassword: "EXPO_WORKSPACE_RELEASE_KEY_PASSWORD"
     };
     function tag(op, meta) {
-      return (0, core_1.withMeta)(op, { platform: "android", status: meta.status ?? "add", ...meta });
+      return (0, core_12.withMeta)(op, { platform: "android", status: meta.status ?? "add", ...meta });
     }
     function gradleProperty(key, value) {
       return {
@@ -1308,7 +1308,7 @@ var require_android = __commonJS({
         }
         for (const permission of slice.permissions ?? []) {
           if (typeof permission !== "string" || !permission.trim()) {
-            throw new Error(`${core_1.ERR} android.permissions entries must be non-empty strings.`);
+            throw new Error(`${core_12.ERR} android.permissions entries must be non-empty strings.`);
           }
           const name = permission.trim();
           ops.push(tag({ kind: "androidManifestPermission", permission: name, label: `android:permission:${name}` }, {
@@ -1357,7 +1357,7 @@ var require_android = __commonJS({
         if (slice.signing) {
           const s = slice.signing;
           if (!s.storeFile?.trim() || !s.keyAlias?.trim()) {
-            throw new Error(`${core_1.ERR} android.signing requires "storeFile" and "keyAlias".`);
+            throw new Error(`${core_12.ERR} android.signing requires "storeFile" and "keyAlias".`);
           }
           const storePassword = tryResolveSecret(s.storePassword, "android.signing.storePassword", warnings);
           const keyPassword = tryResolveSecret(s.keyPassword, "android.signing.keyPassword", warnings);
@@ -1440,7 +1440,7 @@ var require_android = __commonJS({
     };
     function tryResolveSecret(value, label, warnings) {
       try {
-        return (0, core_1.resolveSecret)(value, label);
+        return (0, core_12.resolveSecret)(value, label);
       } catch (error) {
         warnings.push(error.message.replace(/^\[expo-workspaces\]\s*/, ""));
         return "";
@@ -1474,7 +1474,7 @@ var require_androidExecutor = __commonJS({
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.androidExecutor = void 0;
-    var config_plugins_12 = require("@expo/config-plugins");
+    var config_plugins_1 = require("@expo/config-plugins");
     var generateCode_1 = require("@expo/config-plugins/build/utils/generateCode");
     var types_1 = require_types2();
     function applyGradleProperties(modResults, ops) {
@@ -1507,7 +1507,7 @@ var require_androidExecutor = __commonJS({
     }
     function gradleMod(file, blocks, replaces) {
       return (config) => {
-        const wrap = file === "app" ? config_plugins_12.withAppBuildGradle : config_plugins_12.withProjectBuildGradle;
+        const wrap = file === "app" ? config_plugins_1.withAppBuildGradle : config_plugins_1.withProjectBuildGradle;
         return wrap(config, (cfg) => {
           cfg.modResults.contents = applyGradleText(cfg.modResults.contents, blocks, replaces);
           return cfg;
@@ -1516,10 +1516,10 @@ var require_androidExecutor = __commonJS({
     }
     function applyManifest(manifest, permissions, attributes) {
       for (const op of permissions) {
-        config_plugins_12.AndroidConfig.Permissions.ensurePermission(manifest, op.permission);
+        config_plugins_1.AndroidConfig.Permissions.ensurePermission(manifest, op.permission);
       }
       if (attributes.length > 0) {
-        const application = config_plugins_12.AndroidConfig.Manifest.getMainApplicationOrThrow(manifest);
+        const application = config_plugins_1.AndroidConfig.Manifest.getMainApplicationOrThrow(manifest);
         application.$ = application.$ ?? {};
         for (const op of attributes) {
           application.$[op.name] = op.value;
@@ -1537,7 +1537,7 @@ var require_androidExecutor = __commonJS({
       const permissions = androidOps.filter((o) => o.kind === "androidManifestPermission");
       const attributes = androidOps.filter((o) => o.kind === "androidManifestAppAttribute");
       if (properties.length > 0) {
-        config = (0, config_plugins_12.withGradleProperties)(config, (cfg) => {
+        config = (0, config_plugins_1.withGradleProperties)(config, (cfg) => {
           applyGradleProperties(cfg.modResults, properties);
           return cfg;
         });
@@ -1550,7 +1550,7 @@ var require_androidExecutor = __commonJS({
         }
       }
       if (permissions.length > 0 || attributes.length > 0) {
-        config = (0, config_plugins_12.withAndroidManifest)(config, (cfg) => {
+        config = (0, config_plugins_1.withAndroidManifest)(config, (cfg) => {
           applyManifest(cfg.modResults, permissions, attributes);
           return cfg;
         });
@@ -1591,18 +1591,18 @@ var require_validate = __commonJS({
     exports2.normalizeRemotePods = normalizeRemotePods;
     exports2.normalizePodBuildSettingsRules = normalizePodBuildSettingsRules;
     exports2.normalizeRemovePodBuildPhases = normalizeRemovePodBuildPhases;
-    var core_1 = require_build();
+    var core_12 = require_build();
     function normalizeLocalPods(pods) {
       if (!Array.isArray(pods) || pods.length === 0) {
         return [];
       }
       return pods.map((entry, index) => {
         if (!entry?.pod?.trim() || !entry?.path?.trim()) {
-          throw new Error(`${core_1.ERR} localPods[${index}] requires "pod" and "path" (relative to ios/).`);
+          throw new Error(`${core_12.ERR} localPods[${index}] requires "pod" and "path" (relative to ios/).`);
         }
         const podPath = entry.path.trim();
         if (podPath.startsWith("/") || /^[A-Za-z]:/.test(podPath)) {
-          throw new Error(`${core_1.ERR} localPods[${index}].path must be relative to ios/, not absolute: "${podPath}"`);
+          throw new Error(`${core_12.ERR} localPods[${index}].path must be relative to ios/, not absolute: "${podPath}"`);
         }
         return { pod: entry.pod.trim(), path: podPath };
       });
@@ -1613,10 +1613,10 @@ var require_validate = __commonJS({
       }
       return pods.map((entry, index) => {
         if (!entry?.pod?.trim()) {
-          throw new Error(`${core_1.ERR} remotePods[${index}] requires "pod".`);
+          throw new Error(`${core_12.ERR} remotePods[${index}] requires "pod".`);
         }
         if (entry.configurations && !Array.isArray(entry.configurations)) {
-          throw new Error(`${core_1.ERR} remotePods[${index}].configurations must be an array.`);
+          throw new Error(`${core_12.ERR} remotePods[${index}].configurations must be an array.`);
         }
         return { ...entry, pod: entry.pod.trim() };
       });
@@ -1626,22 +1626,22 @@ var require_validate = __commonJS({
         return [];
       }
       return rules.map((rule, index) => {
-        (0, core_1.assertNameMatcher)(rule?.target, `podBuildSettings[${index}].target`);
+        (0, core_12.assertNameMatcher)(rule?.target, `podBuildSettings[${index}].target`);
         const settings = rule?.settings ?? {};
         const entries = Object.entries(settings);
         if (entries.length === 0) {
-          throw new Error(`${core_1.ERR} podBuildSettings[${index}] requires non-empty "settings".`);
+          throw new Error(`${core_12.ERR} podBuildSettings[${index}] requires non-empty "settings".`);
         }
         for (const [key, value] of entries) {
           if (!key.trim()) {
-            throw new Error(`${core_1.ERR} podBuildSettings[${index}] has an empty build setting key.`);
+            throw new Error(`${core_12.ERR} podBuildSettings[${index}] has an empty build setting key.`);
           }
           if (typeof value !== "string") {
-            throw new Error(`${core_1.ERR} podBuildSettings[${index}].settings["${key}"] must be a string value.`);
+            throw new Error(`${core_12.ERR} podBuildSettings[${index}].settings["${key}"] must be a string value.`);
           }
         }
         const configurations = rule.configurations?.map((configuration, configIndex) => {
-          (0, core_1.assertBuildConfiguration)(configuration, `podBuildSettings[${index}].configurations[${configIndex}]`);
+          (0, core_12.assertBuildConfiguration)(configuration, `podBuildSettings[${index}].configurations[${configIndex}]`);
           return configuration;
         });
         return { ...rule, target: rule.target, settings, configurations };
@@ -1652,9 +1652,9 @@ var require_validate = __commonJS({
         return [];
       }
       return rules.map((rule, index) => {
-        (0, core_1.assertNameMatcher)(rule?.target, `removePodBuildPhases[${index}].target`);
+        (0, core_12.assertNameMatcher)(rule?.target, `removePodBuildPhases[${index}].target`);
         if (!rule.phase?.trim()) {
-          throw new Error(`${core_1.ERR} removePodBuildPhases[${index}] requires a non-empty "phase".`);
+          throw new Error(`${core_12.ERR} removePodBuildPhases[${index}] requires a non-empty "phase".`);
         }
         return { target: rule.target, phase: rule.phase.trim() };
       });
@@ -1668,7 +1668,7 @@ var require_pods = __commonJS({
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.podsGenerator = void 0;
-    var core_1 = require_build();
+    var core_12 = require_build();
     var validate_1 = require_validate();
     var LOCAL_PODS_TAG = "declarative-workspace-local-pods";
     var REMOTE_PODS_TAG = "declarative-workspace-remote-pods";
@@ -1680,24 +1680,24 @@ var require_pods = __commonJS({
       return pods.map(({ pod, path }) => `  pod '${pod}', :path => '${path}'`).join("\n");
     }
     function remotePodLine(p) {
-      const parts = [`pod ${(0, core_1.rubyLiteral)(p.pod)}`];
+      const parts = [`pod ${(0, core_12.rubyLiteral)(p.pod)}`];
       if (p.version) {
-        parts.push((0, core_1.rubyLiteral)(p.version));
+        parts.push((0, core_12.rubyLiteral)(p.version));
       }
       if (p.git) {
-        parts.push(`:git => ${(0, core_1.rubyLiteral)(p.git)}`);
+        parts.push(`:git => ${(0, core_12.rubyLiteral)(p.git)}`);
       }
       if (p.branch) {
-        parts.push(`:branch => ${(0, core_1.rubyLiteral)(p.branch)}`);
+        parts.push(`:branch => ${(0, core_12.rubyLiteral)(p.branch)}`);
       }
       if (p.tag) {
-        parts.push(`:tag => ${(0, core_1.rubyLiteral)(p.tag)}`);
+        parts.push(`:tag => ${(0, core_12.rubyLiteral)(p.tag)}`);
       }
       if (p.commit) {
-        parts.push(`:commit => ${(0, core_1.rubyLiteral)(p.commit)}`);
+        parts.push(`:commit => ${(0, core_12.rubyLiteral)(p.commit)}`);
       }
       if (p.configurations?.length) {
-        parts.push(`:configurations => [${p.configurations.map((c) => (0, core_1.rubyLiteral)(c)).join(", ")}]`);
+        parts.push(`:configurations => [${p.configurations.map((c) => (0, core_12.rubyLiteral)(c)).join(", ")}]`);
       }
       if (p.modularHeaders != null) {
         parts.push(`:modular_headers => ${p.modularHeaders}`);
@@ -1705,20 +1705,20 @@ var require_pods = __commonJS({
       return `  ${parts.join(", ")}`;
     }
     function podBuildSettingsLines(rules) {
-      const targetCondition = rules.map((rule) => `(${(0, core_1.nameMatcherToRuby)(rule.target)})`).join(" || ");
+      const targetCondition = rules.map((rule) => `(${(0, core_12.nameMatcherToRuby)(rule.target)})`).join(" || ");
       const lines = [
         "  installer.pods_project.targets.each do |target|",
         `    next unless ${targetCondition}`,
         "    target.build_configurations.each do |config|"
       ];
       for (const rule of rules) {
-        lines.push(`      if ${(0, core_1.nameMatcherToRuby)(rule.target)}`);
+        lines.push(`      if ${(0, core_12.nameMatcherToRuby)(rule.target)}`);
         if (rule.configurations?.length) {
-          const names = rule.configurations.map((value) => (0, core_1.rubyLiteral)(value)).join(", ");
+          const names = rule.configurations.map((value) => (0, core_12.rubyLiteral)(value)).join(", ");
           lines.push(`        next unless [${names}].include?(config.name)`);
         }
         for (const [key, value] of Object.entries(rule.settings)) {
-          lines.push(`        config.build_settings[${(0, core_1.rubyLiteral)(key)}] = ${(0, core_1.rubyLiteral)(value)}`);
+          lines.push(`        config.build_settings[${(0, core_12.rubyLiteral)(key)}] = ${(0, core_12.rubyLiteral)(value)}`);
         }
         lines.push("      end");
       }
@@ -1729,9 +1729,9 @@ var require_pods = __commonJS({
     function podRemoveBuildPhasesLines(rules) {
       return rules.map((rule) => [
         "  installer.pods_project.targets.each do |target|",
-        `    next unless ${(0, core_1.nameMatcherToRuby)(rule.target)}`,
+        `    next unless ${(0, core_12.nameMatcherToRuby)(rule.target)}`,
         "    target.build_phases.delete_if do |phase|",
-        `      phase.respond_to?(:name) && phase.name == ${(0, core_1.rubyLiteral)(rule.phase)}`,
+        `      phase.respond_to?(:name) && phase.name == ${(0, core_12.rubyLiteral)(rule.phase)}`,
         "    end",
         "  end"
       ].join("\n")).join("\n");
@@ -1748,7 +1748,7 @@ var require_pods = __commonJS({
         const removePodBuildPhases = (0, validate_1.normalizeRemovePodBuildPhases)(manifest.removePodBuildPhases);
         const ops = [];
         if (localPods.length > 0) {
-          ops.push((0, core_1.withMeta)(mergeBlock(LOCAL_PODS_TAG, localPodLines(localPods), USE_EXPO_MODULES, "localPods"), {
+          ops.push((0, core_12.withMeta)(mergeBlock(LOCAL_PODS_TAG, localPodLines(localPods), USE_EXPO_MODULES, "localPods"), {
             id: "pod:local",
             platform: "ios",
             semanticKind: "ios.pod.add",
@@ -1759,7 +1759,7 @@ var require_pods = __commonJS({
           }));
         }
         if (remotePods.length > 0) {
-          ops.push((0, core_1.withMeta)(mergeBlock(REMOTE_PODS_TAG, remotePods.map(remotePodLine).join("\n"), USE_EXPO_MODULES, "remotePods"), {
+          ops.push((0, core_12.withMeta)(mergeBlock(REMOTE_PODS_TAG, remotePods.map(remotePodLine).join("\n"), USE_EXPO_MODULES, "remotePods"), {
             id: "pod:remote",
             platform: "ios",
             semanticKind: "ios.pod.add",
@@ -1770,7 +1770,7 @@ var require_pods = __commonJS({
           }));
         }
         if (podBuildSettings.length > 0) {
-          ops.push((0, core_1.withMeta)(mergeBlock(POD_BUILD_SETTINGS_TAG, podBuildSettingsLines(podBuildSettings), POST_INSTALL, "podBuildSettings"), {
+          ops.push((0, core_12.withMeta)(mergeBlock(POD_BUILD_SETTINGS_TAG, podBuildSettingsLines(podBuildSettings), POST_INSTALL, "podBuildSettings"), {
             id: "pod:buildSettings",
             platform: "ios",
             semanticKind: "ios.pod.buildSetting.set",
@@ -1781,7 +1781,7 @@ var require_pods = __commonJS({
           }));
         }
         if (removePodBuildPhases.length > 0) {
-          ops.push((0, core_1.withMeta)(mergeBlock(POD_REMOVE_BUILD_PHASES_TAG, podRemoveBuildPhasesLines(removePodBuildPhases), POST_INSTALL, "removePodBuildPhases"), {
+          ops.push((0, core_12.withMeta)(mergeBlock(POD_REMOVE_BUILD_PHASES_TAG, podRemoveBuildPhasesLines(removePodBuildPhases), POST_INSTALL, "removePodBuildPhases"), {
             id: "pod:removeBuildPhases",
             platform: "ios",
             semanticKind: "ios.pod.buildPhase.remove",
@@ -1827,25 +1827,25 @@ var require_build3 = __commonJS({
 var require_openProject = __commonJS({
   "packages/@expo-workspaces/ios-xcode/build/openProject.js"(exports2) {
     "use strict";
-    var __importDefault = exports2 && exports2.__importDefault || function(mod) {
+    var __importDefault2 = exports2 && exports2.__importDefault || function(mod) {
       return mod && mod.__esModule ? mod : { "default": mod };
     };
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.openXcodeProject = openXcodeProject;
     exports2.serializeXcodeProject = serializeXcodeProject;
-    var fs_1 = __importDefault(require("fs"));
-    var path_1 = __importDefault(require("path"));
-    var config_plugins_12 = require("@expo/config-plugins");
+    var fs_1 = __importDefault2(require("fs"));
+    var path_12 = __importDefault2(require("path"));
+    var config_plugins_1 = require("@expo/config-plugins");
     var xcode_1 = require("@bacons/xcode");
     var { build: buildPbxproj } = require("@bacons/xcode/json");
     function openXcodeProject(appProjectRoot) {
-      const pbxprojPath = config_plugins_12.IOSConfig.Paths.getPBXProjectPath(appProjectRoot);
+      const pbxprojPath = config_plugins_1.IOSConfig.Paths.getPBXProjectPath(appProjectRoot);
       if (!fs_1.default.existsSync(pbxprojPath)) {
         throw new Error(`[expo-workspaces] PBX project not found at ${pbxprojPath}. Run "expo prebuild" for iOS first.`);
       }
-      const xcodeprojPath = config_plugins_12.IOSConfig.Paths.getXcodeProjectPath(appProjectRoot);
-      const xcodeprojBasename = path_1.default.basename(xcodeprojPath);
-      const schemesDirectory = path_1.default.join(xcodeprojPath, "xcshareddata", "xcschemes");
+      const xcodeprojPath = config_plugins_1.IOSConfig.Paths.getXcodeProjectPath(appProjectRoot);
+      const xcodeprojBasename = path_12.default.basename(xcodeprojPath);
+      const schemesDirectory = path_12.default.join(xcodeprojPath, "xcshareddata", "xcschemes");
       return {
         project: xcode_1.XcodeProject.open(pbxprojPath),
         pbxprojPath,
@@ -1880,14 +1880,14 @@ var require_pbxOp = __commonJS({
 var require_pbxExecutor = __commonJS({
   "packages/@expo-workspaces/ios-xcode/build/pbxExecutor.js"(exports2) {
     "use strict";
-    var __importDefault = exports2 && exports2.__importDefault || function(mod) {
+    var __importDefault2 = exports2 && exports2.__importDefault || function(mod) {
       return mod && mod.__esModule ? mod : { "default": mod };
     };
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.pbxExecutor = void 0;
-    var fs_1 = __importDefault(require("fs"));
-    var config_plugins_12 = require("@expo/config-plugins");
-    var core_1 = require_build();
+    var fs_1 = __importDefault2(require("fs"));
+    var config_plugins_1 = require("@expo/config-plugins");
+    var core_12 = require_build();
     var openProject_1 = require_openProject();
     var pbxOp_1 = require_pbxOp();
     var pbxExecutor = (config, ops) => {
@@ -1895,7 +1895,7 @@ var require_pbxExecutor = __commonJS({
       if (pbxOps.length === 0) {
         return config;
       }
-      return (0, config_plugins_12.withMod)(config, {
+      return (0, config_plugins_1.withMod)(config, {
         platform: "ios",
         mod: "finalized",
         async action(config2) {
@@ -1908,9 +1908,9 @@ var require_pbxExecutor = __commonJS({
           const next = (0, openProject_1.serializeXcodeProject)(project);
           if (next.trim().length > 0 && next !== original) {
             fs_1.default.writeFileSync(pbxprojPath, next);
-            (0, core_1.reportChange)("pbxproj", pbxprojPath);
+            (0, core_12.reportChange)("pbxproj", pbxprojPath);
           } else {
-            (0, core_1.reportSkip)("pbxproj", pbxprojPath);
+            (0, core_12.reportSkip)("pbxproj", pbxprojPath);
           }
           return config2;
         }
@@ -1926,7 +1926,7 @@ var require_validate2 = __commonJS({
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.normalizeSchemeDefinitions = normalizeSchemeDefinitions;
-    var core_1 = require_build();
+    var core_12 = require_build();
     var INVALID_SCHEME_CHARS = /[\\/:*?"<>|]/;
     function normalizeSchemeDefinitions(schemes) {
       if (!Array.isArray(schemes) || schemes.length === 0) {
@@ -1935,22 +1935,22 @@ var require_validate2 = __commonJS({
       const seen = /* @__PURE__ */ new Set();
       return schemes.map((scheme, index) => {
         if (!scheme?.name?.trim() || !scheme.configuration) {
-          throw new Error(`${core_1.ERR} schemes[${index}] requires "name" and "configuration" ("Debug" | "Release").`);
+          throw new Error(`${core_12.ERR} schemes[${index}] requires "name" and "configuration" ("Debug" | "Release").`);
         }
         const name = scheme.name.trim();
         if (INVALID_SCHEME_CHARS.test(name)) {
-          throw new Error(`${core_1.ERR} schemes[${index}].name contains invalid path characters: "${name}"`);
+          throw new Error(`${core_12.ERR} schemes[${index}].name contains invalid path characters: "${name}"`);
         }
         if (seen.has(name)) {
-          throw new Error(`${core_1.ERR} Duplicate scheme name "${name}" in schemes configuration.`);
+          throw new Error(`${core_12.ERR} Duplicate scheme name "${name}" in schemes configuration.`);
         }
         seen.add(name);
-        (0, core_1.assertBuildConfiguration)(scheme.configuration, `schemes[${index}].configuration`);
+        (0, core_12.assertBuildConfiguration)(scheme.configuration, `schemes[${index}].configuration`);
         if (scheme.archive) {
-          (0, core_1.assertBuildConfiguration)(scheme.archive, `schemes[${index}].archive`);
+          (0, core_12.assertBuildConfiguration)(scheme.archive, `schemes[${index}].archive`);
         }
         if (scheme.analyze) {
-          (0, core_1.assertBuildConfiguration)(scheme.analyze, `schemes[${index}].analyze`);
+          (0, core_12.assertBuildConfiguration)(scheme.analyze, `schemes[${index}].analyze`);
         }
         return { ...scheme, name };
       });
@@ -1962,13 +1962,13 @@ var require_validate2 = __commonJS({
 var require_schemes = __commonJS({
   "packages/@expo-workspaces/ios-xcode/build/generators/schemes.js"(exports2) {
     "use strict";
-    var __importDefault = exports2 && exports2.__importDefault || function(mod) {
+    var __importDefault2 = exports2 && exports2.__importDefault || function(mod) {
       return mod && mod.__esModule ? mod : { "default": mod };
     };
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.schemesGenerator = void 0;
-    var fs_1 = __importDefault(require("fs"));
-    var path_1 = __importDefault(require("path"));
+    var fs_1 = __importDefault2(require("fs"));
+    var path_12 = __importDefault2(require("path"));
     var xcode_1 = require("@bacons/xcode");
     var pbxOp_1 = require_pbxOp();
     var validate_1 = require_validate2();
@@ -1998,7 +1998,7 @@ var require_schemes = __commonJS({
                 }
               }
               const testTarget = project.rootObject.props.targets.find((target) => xcode_1.PBXNativeTarget.is(target) && cleanName(target.props.productType) === UNIT_TEST_PRODUCT_TYPE);
-              const container = `container:${path_1.default.basename(path_1.default.dirname(project.filePath))}`;
+              const container = `container:${path_12.default.basename(path_12.default.dirname(project.filePath))}`;
               for (const scheme of schemes) {
                 const xcscheme = project.createSchemeForTarget(app, scheme.name);
                 xcscheme.props.lastUpgradeVersion = "1130";
@@ -2035,7 +2035,7 @@ var require_xcodeEnv = __commonJS({
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.xcodeEnvGenerator = void 0;
-    var core_1 = require_build();
+    var core_12 = require_build();
     var XCODE_ENV_TAG = "declarative-workspace-xcode-env";
     function formatExportLine(key, value) {
       const safeKey = key.replace(/[^A-Za-z0-9_]/g, "");
@@ -2085,7 +2085,7 @@ var require_xcodeEnv = __commonJS({
         };
         return {
           ops: [
-            (0, core_1.withMeta)(op, {
+            (0, core_12.withMeta)(op, {
               id: "xcode.env",
               platform: "ios",
               semanticKind: "ios.xcode.env.set",
@@ -2214,7 +2214,7 @@ var require_validate3 = __commonJS({
     exports2.normalizeTargetRef = normalizeTargetRef;
     exports2.normalizeRemotePackages = normalizeRemotePackages;
     exports2.normalizeLocalPackages = normalizeLocalPackages;
-    var core_1 = require_build();
+    var core_12 = require_build();
     var REQUIREMENT_KINDS = /* @__PURE__ */ new Set([
       "upToNextMajorVersion",
       "upToNextMinorVersion",
@@ -2225,12 +2225,12 @@ var require_validate3 = __commonJS({
     ]);
     function assertRequirement(req, label) {
       if (!req || typeof req !== "object" || !REQUIREMENT_KINDS.has(req.kind ?? "")) {
-        throw new Error(`${core_1.ERR} ${label}.requirement.kind must be one of ${[...REQUIREMENT_KINDS].join(", ")}.`);
+        throw new Error(`${core_12.ERR} ${label}.requirement.kind must be one of ${[...REQUIREMENT_KINDS].join(", ")}.`);
       }
     }
     function assertProducts(products, label) {
       if (!Array.isArray(products) || products.length === 0 || products.some((p) => typeof p !== "string" || !p.trim())) {
-        throw new Error(`${core_1.ERR} ${label}.products must be a non-empty array of product names.`);
+        throw new Error(`${core_12.ERR} ${label}.products must be a non-empty array of product names.`);
       }
     }
     function normalizeTargetRef(target, label) {
@@ -2240,18 +2240,18 @@ var require_validate3 = __commonJS({
       if (typeof target === "string") {
         const trimmed = target.trim();
         if (!trimmed) {
-          throw new Error(`${core_1.ERR} ${label}.target must be a non-empty string.`);
+          throw new Error(`${core_12.ERR} ${label}.target must be a non-empty string.`);
         }
         return [trimmed];
       }
       if (!Array.isArray(target) || target.length === 0) {
-        throw new Error(`${core_1.ERR} ${label}.target must be a non-empty string or array of strings.`);
+        throw new Error(`${core_12.ERR} ${label}.target must be a non-empty string or array of strings.`);
       }
       const normalized = [];
       for (let i = 0; i < target.length; i += 1) {
         const entry = target[i];
         if (typeof entry !== "string" || !entry.trim()) {
-          throw new Error(`${core_1.ERR} ${label}.target[${i}] must be a non-empty string.`);
+          throw new Error(`${core_12.ERR} ${label}.target[${i}] must be a non-empty string.`);
         }
         normalized.push(entry.trim());
       }
@@ -2264,7 +2264,7 @@ var require_validate3 = __commonJS({
       return packages.map((pkg, index) => {
         const label = `swiftPackages.remote[${index}]`;
         if (!pkg?.url?.trim()) {
-          throw new Error(`${core_1.ERR} ${label} requires a "url".`);
+          throw new Error(`${core_12.ERR} ${label} requires a "url".`);
         }
         assertRequirement(pkg.requirement, label);
         assertProducts(pkg.products, label);
@@ -2283,7 +2283,7 @@ var require_validate3 = __commonJS({
       return packages.map((pkg, index) => {
         const label = `swiftPackages.local[${index}]`;
         if (!pkg?.path?.trim()) {
-          throw new Error(`${core_1.ERR} ${label} requires a "path".`);
+          throw new Error(`${core_12.ERR} ${label} requires a "path".`);
         }
         assertProducts(pkg.products, label);
         return {
@@ -2304,7 +2304,7 @@ var require_spm = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.spmGenerator = void 0;
     var xcode_1 = require("@bacons/xcode");
-    var core_1 = require_build();
+    var core_12 = require_build();
     var ios_xcode_1 = require_build4();
     var validate_1 = require_validate3();
     function findTarget(project, name) {
@@ -2396,7 +2396,7 @@ var require_spm = __commonJS({
       ].filter((line) => line !== "").join("\n");
     }
     function podTargetSpmOp(spec) {
-      return (0, core_1.withMeta)({
+      return (0, core_12.withMeta)({
         kind: "mergeBlock",
         base: "ios",
         path: "Podfile",
@@ -2638,13 +2638,13 @@ var require_registry = __commonJS({
 var require_entitlements = __commonJS({
   "packages/@expo-workspaces/ios-targets/build/entitlements.js"(exports2) {
     "use strict";
-    var __importDefault = exports2 && exports2.__importDefault || function(mod) {
+    var __importDefault2 = exports2 && exports2.__importDefault || function(mod) {
       return mod && mod.__esModule ? mod : { "default": mod };
     };
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.resolveEntitlements = resolveEntitlements;
     exports2.buildEntitlements = buildEntitlements;
-    var plist_1 = __importDefault(require("@expo/plist"));
+    var plist_1 = __importDefault2(require("@expo/plist"));
     var registry_1 = require_registry();
     var APP_GROUPS_KEY = "com.apple.security.application-groups";
     function resolveEntitlements(config, target) {
@@ -2732,12 +2732,12 @@ var require_configurationList = __commonJS({
 var require_generateTarget = __commonJS({
   "packages/@expo-workspaces/ios-targets/build/generateTarget.js"(exports2) {
     "use strict";
-    var __importDefault = exports2 && exports2.__importDefault || function(mod) {
+    var __importDefault2 = exports2 && exports2.__importDefault || function(mod) {
       return mod && mod.__esModule ? mod : { "default": mod };
     };
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.applyTargetsPbx = applyTargetsPbx;
-    var path_1 = __importDefault(require("path"));
+    var path_12 = __importDefault2(require("path"));
     var xcode_1 = require("@bacons/xcode");
     var configurationList_1 = require_configurationList();
     var PROTECTED_GROUP_NAME = "expo:targets";
@@ -2837,7 +2837,7 @@ var require_generateTarget = __commonJS({
         target.getSourcesBuildPhase();
         target.getResourcesBuildPhase();
         mainAppTarget.addDependency(target);
-        const protectedGroup = ensureProtectedGroup(project, path_1.default.posix.dirname(plan.cwd));
+        const protectedGroup = ensureProtectedGroup(project, path_12.default.posix.dirname(plan.cwd));
         const exceptionSet = xcode_1.PBXFileSystemSynchronizedBuildFileExceptionSet.create(project, {
           target,
           membershipExceptions: plan.membershipExceptions
@@ -2862,13 +2862,13 @@ var require_generateTarget = __commonJS({
 var require_infoPlist = __commonJS({
   "packages/@expo-workspaces/ios-targets/build/infoPlist.js"(exports2) {
     "use strict";
-    var __importDefault = exports2 && exports2.__importDefault || function(mod) {
+    var __importDefault2 = exports2 && exports2.__importDefault || function(mod) {
       return mod && mod.__esModule ? mod : { "default": mod };
     };
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.getTargetInfoPlist = getTargetInfoPlist;
     exports2.buildInfoPlist = buildInfoPlist;
-    var plist_1 = __importDefault(require("@expo/plist"));
+    var plist_1 = __importDefault2(require("@expo/plist"));
     var registry_1 = require_registry();
     function getTargetInfoPlist(type) {
       const pointIdentifier = (0, registry_1.extensionPointIdentifier)(type);
@@ -2941,7 +2941,7 @@ var require_validate4 = __commonJS({
     exports2.DEFAULT_TARGETS_ROOT = void 0;
     exports2.cleanTargetsRoot = cleanTargetsRoot;
     exports2.normalizeTargets = normalizeTargets;
-    var core_1 = require_build();
+    var core_12 = require_build();
     var TARGET_TYPES = /* @__PURE__ */ new Set(["share", "widget", "clip"]);
     var INVALID_PATH_SEGMENT = /[\\/:*?"<>|]/;
     function isAbsolute(value) {
@@ -2959,61 +2959,61 @@ var require_validate4 = __commonJS({
       const seen = /* @__PURE__ */ new Set();
       return targets.map((target, index) => {
         if (!target?.name?.trim()) {
-          throw new Error(`${core_1.ERR} targets[${index}] requires a non-empty "name".`);
+          throw new Error(`${core_12.ERR} targets[${index}] requires a non-empty "name".`);
         }
         const name = target.name.trim();
         if (INVALID_PATH_SEGMENT.test(name)) {
-          throw new Error(`${core_1.ERR} targets[${index}].name contains invalid path characters: "${name}"`);
+          throw new Error(`${core_12.ERR} targets[${index}].name contains invalid path characters: "${name}"`);
         }
         if (seen.has(name)) {
-          throw new Error(`${core_1.ERR} Duplicate target name "${name}" in targets configuration.`);
+          throw new Error(`${core_12.ERR} Duplicate target name "${name}" in targets configuration.`);
         }
         seen.add(name);
         if (!target.type || !TARGET_TYPES.has(target.type)) {
-          throw new Error(`${core_1.ERR} targets[${index}].type must be one of ${[...TARGET_TYPES].join(", ")} (received "${target.type}").`);
+          throw new Error(`${core_12.ERR} targets[${index}].type must be one of ${[...TARGET_TYPES].join(", ")} (received "${target.type}").`);
         }
         if (target.bundleIdentifier !== void 0 && !target.bundleIdentifier.trim()) {
-          throw new Error(`${core_1.ERR} targets[${index}].bundleIdentifier cannot be empty when provided.`);
+          throw new Error(`${core_12.ERR} targets[${index}].bundleIdentifier cannot be empty when provided.`);
         }
         if (target.source !== void 0) {
           const source = target.source.trim();
           if (!source) {
-            throw new Error(`${core_1.ERR} targets[${index}].source cannot be empty when provided.`);
+            throw new Error(`${core_12.ERR} targets[${index}].source cannot be empty when provided.`);
           }
           if (isAbsolute(source)) {
-            throw new Error(`${core_1.ERR} targets[${index}].source must be relative to the app root: "${source}"`);
+            throw new Error(`${core_12.ERR} targets[${index}].source must be relative to the app root: "${source}"`);
           }
         }
         if (target.entitlements !== void 0 && typeof target.entitlements !== "object") {
-          throw new Error(`${core_1.ERR} targets[${index}].entitlements must be an object.`);
+          throw new Error(`${core_12.ERR} targets[${index}].entitlements must be an object.`);
         }
         if (target.buildSettings !== void 0) {
           if (typeof target.buildSettings !== "object") {
-            throw new Error(`${core_1.ERR} targets[${index}].buildSettings must be an object.`);
+            throw new Error(`${core_12.ERR} targets[${index}].buildSettings must be an object.`);
           }
           for (const [key, value] of Object.entries(target.buildSettings)) {
             if (typeof value !== "string") {
-              throw new Error(`${core_1.ERR} targets[${index}].buildSettings["${key}"] must be a string.`);
+              throw new Error(`${core_12.ERR} targets[${index}].buildSettings["${key}"] must be a string.`);
             }
           }
         }
         if (target.pods !== void 0) {
           if (!Array.isArray(target.pods)) {
-            throw new Error(`${core_1.ERR} targets[${index}].pods must be an array.`);
+            throw new Error(`${core_12.ERR} targets[${index}].pods must be an array.`);
           }
           target.pods.forEach((entry, podIdx) => {
             const label = `targets[${index}].pods[${podIdx}]`;
             if (!entry || typeof entry !== "object") {
-              throw new Error(`${core_1.ERR} ${label} must be an object.`);
+              throw new Error(`${core_12.ERR} ${label} must be an object.`);
             }
             if (!entry.pod || typeof entry.pod !== "string" || !entry.pod.trim()) {
-              throw new Error(`${core_1.ERR} ${label} requires a non-empty "pod" name.`);
+              throw new Error(`${core_12.ERR} ${label} requires a non-empty "pod" name.`);
             }
             if (entry.path !== void 0 && (typeof entry.path !== "string" || !entry.path.trim())) {
-              throw new Error(`${core_1.ERR} ${label}.path must be a non-empty string when provided.`);
+              throw new Error(`${core_12.ERR} ${label}.path must be a non-empty string when provided.`);
             }
             if (entry.configurations !== void 0 && !Array.isArray(entry.configurations)) {
-              throw new Error(`${core_1.ERR} ${label}.configurations must be an array of strings.`);
+              throw new Error(`${core_12.ERR} ${label}.configurations must be an array of strings.`);
             }
           });
         }
@@ -3027,14 +3027,14 @@ var require_validate4 = __commonJS({
 var require_targets = __commonJS({
   "packages/@expo-workspaces/ios-targets/build/generators/targets.js"(exports2) {
     "use strict";
-    var __importDefault = exports2 && exports2.__importDefault || function(mod) {
+    var __importDefault2 = exports2 && exports2.__importDefault || function(mod) {
       return mod && mod.__esModule ? mod : { "default": mod };
     };
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.targetsGenerator = void 0;
-    var fs_1 = __importDefault(require("fs"));
-    var path_1 = __importDefault(require("path"));
-    var core_1 = require_build();
+    var fs_1 = __importDefault2(require("fs"));
+    var path_12 = __importDefault2(require("path"));
+    var core_12 = require_build();
     var ios_xcode_1 = require_build4();
     var bundleId_1 = require_bundleId();
     var easCredentials_1 = require_easCredentials();
@@ -3092,7 +3092,7 @@ end`;
       const targetsRootClean = (0, validate_1.cleanTargetsRoot)(slice.targetsRoot);
       const resolved = targets.map((spec) => {
         const sourceRel = spec.source ?? `${targetsRootClean}/${spec.name}`;
-        const sourceAbs = path_1.default.join(projectRoot, sourceRel);
+        const sourceAbs = path_12.default.join(projectRoot, sourceRel);
         const cwd = `../${sourceRel}`;
         const productType = (0, registry_1.productTypeForType)(spec.type);
         const isExtension = isExtensionProductType(productType);
@@ -3144,7 +3144,7 @@ end`;
         const ops = [];
         resolved.forEach(({ spec, sourceRel, plan, entitlementsJson }, index) => {
           const source = `ios.targets[${index}]`;
-          ops.push((0, core_1.withMeta)({
+          ops.push((0, core_12.withMeta)({
             kind: "writeFile",
             base: "project",
             path: `${sourceRel}/Info.plist`,
@@ -3161,7 +3161,7 @@ end`;
             desired: { type: spec.type }
           }));
           if (entitlementsJson && plan.entitlementsFileName) {
-            ops.push((0, core_1.withMeta)({
+            ops.push((0, core_12.withMeta)({
               kind: "writeFile",
               base: "project",
               path: `${sourceRel}/${plan.entitlementsFileName}`,
@@ -3179,7 +3179,7 @@ end`;
             }));
           }
         });
-        ops.push((0, core_1.withMeta)({
+        ops.push((0, core_12.withMeta)({
           kind: "appendOnce",
           base: "ios",
           path: "Podfile",
@@ -3197,7 +3197,7 @@ end`;
         resolved.forEach(({ spec }, index) => {
           if (!spec.pods?.length)
             return;
-          ops.push((0, core_1.withMeta)({
+          ops.push((0, core_12.withMeta)({
             kind: "mergeBlock",
             base: "ios",
             path: "Podfile",
@@ -3322,10 +3322,10 @@ var require_patch = __commonJS({
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.patchGenerator = void 0;
-    var core_1 = require_build();
+    var core_12 = require_build();
     function buildOpsForPatch(patch, index) {
       if (!patch?.file?.trim()) {
-        throw new Error(`${core_1.ERR} patches[${index}] requires a "file".`);
+        throw new Error(`${core_12.ERR} patches[${index}] requires a "file".`);
       }
       const base = patch.base;
       const file = patch.file.trim();
@@ -3377,7 +3377,7 @@ var require_patch = __commonJS({
         }));
       }
       if (count === 0) {
-        throw new Error(`${core_1.ERR} patches[${index}] requires one of "block" | "insertAfter" | "insertBefore" | "replace".`);
+        throw new Error(`${core_12.ERR} patches[${index}] requires one of "block" | "insertAfter" | "insertBefore" | "replace".`);
       }
       return ops;
     }
@@ -3398,7 +3398,7 @@ var require_patch = __commonJS({
         patches.forEach((patch, index) => {
           const source = `patches[${index}]`;
           for (const op of buildOpsForPatch(patch, index)) {
-            ops.push((0, core_1.withMeta)(op, {
+            ops.push((0, core_12.withMeta)(op, {
               id: `patch:${index}:${op.label}`,
               platform: patch.base === "android" ? "android" : "ios",
               semanticKind: "patch.file",
@@ -3432,15 +3432,15 @@ var require_types3 = __commonJS({
 var require_patchExecutor = __commonJS({
   "packages/@expo-workspaces/patch/build/patchExecutor.js"(exports2) {
     "use strict";
-    var __importDefault = exports2 && exports2.__importDefault || function(mod) {
+    var __importDefault2 = exports2 && exports2.__importDefault || function(mod) {
       return mod && mod.__esModule ? mod : { "default": mod };
     };
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.patchExecutor = void 0;
-    var fs_1 = __importDefault(require("fs"));
-    var path_1 = __importDefault(require("path"));
-    var config_plugins_12 = require("@expo/config-plugins");
-    var core_1 = require_build();
+    var fs_1 = __importDefault2(require("fs"));
+    var path_12 = __importDefault2(require("path"));
+    var config_plugins_1 = require("@expo/config-plugins");
+    var core_12 = require_build();
     var types_1 = require_types3();
     var ERR = "[expo-workspaces]";
     function applyAction(contents, op) {
@@ -3471,13 +3471,13 @@ var require_patchExecutor = __commonJS({
       };
     }
     function applyPatchOps(platform, ops) {
-      return (config) => (0, config_plugins_12.withDangerousMod)(config, [
+      return (config) => (0, config_plugins_1.withDangerousMod)(config, [
         platform,
         async (config2) => {
           const { platformProjectRoot, projectRoot } = config2.modRequest;
           const baseDir = (base) => base === "project" ? projectRoot : platformProjectRoot;
           for (const op of ops) {
-            const filePath = path_1.default.resolve(baseDir(op.base), op.path);
+            const filePath = path_12.default.resolve(baseDir(op.base), op.path);
             if (!fs_1.default.existsSync(filePath)) {
               throw new Error(`${ERR} ${op.label}: file not found at ${filePath}.`);
             }
@@ -3485,9 +3485,9 @@ var require_patchExecutor = __commonJS({
             const { next, changed } = applyAction(original, op);
             if (changed) {
               fs_1.default.writeFileSync(filePath, next, "utf8");
-              (0, core_1.reportChange)(op.label, filePath);
+              (0, core_12.reportChange)(op.label, filePath);
             } else {
-              (0, core_1.reportSkip)(op.label, filePath);
+              (0, core_12.reportSkip)(op.label, filePath);
             }
           }
           return config2;
@@ -3540,7 +3540,7 @@ var require_engine = __commonJS({
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.workspaceExecutors = exports2.workspaceGenerators = void 0;
-    var core_1 = require_build();
+    var core_12 = require_build();
     var android_1 = require_build2();
     var ios_pods_1 = require_build3();
     var ios_spm_1 = require_build5();
@@ -3557,90 +3557,432 @@ var require_engine = __commonJS({
       patch_1.patchGenerator,
       android_1.androidGenerator
     ];
-    exports2.workspaceExecutors = [core_1.fileExecutor, patch_1.patchExecutor, android_1.androidExecutor, ios_xcode_1.pbxExecutor];
+    exports2.workspaceExecutors = [core_12.fileExecutor, patch_1.patchExecutor, android_1.androidExecutor, ios_xcode_1.pbxExecutor];
   }
 });
 
-// packages/expo-workspaces/build/withWorkspace.js
-var require_withWorkspace = __commonJS({
-  "packages/expo-workspaces/build/withWorkspace.js"(exports2) {
+// packages/expo-workspaces/build/migrate.js
+var require_migrate = __commonJS({
+  "packages/expo-workspaces/build/migrate.js"(exports2) {
     "use strict";
+    var __importDefault2 = exports2 && exports2.__importDefault || function(mod) {
+      return mod && mod.__esModule ? mod : { "default": mod };
+    };
     Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.withWorkspace = void 0;
-    var core_1 = require_build();
-    var engine_1 = require_engine();
-    exports2.withWorkspace = (0, core_1.createWorkspace)({
-      generators: engine_1.workspaceGenerators,
-      executors: engine_1.workspaceExecutors
-    });
+    exports2.inspectNativeProject = inspectNativeProject;
+    exports2.writeMigratedConfig = writeMigratedConfig;
+    var fs_1 = __importDefault2(require("fs"));
+    var path_12 = __importDefault2(require("path"));
+    function inspectNativeProject(projectRoot) {
+      const iosDir = path_12.default.join(projectRoot, "ios");
+      const androidDir = path_12.default.join(projectRoot, "android");
+      const present = fs_1.default.existsSync(iosDir) || fs_1.default.existsSync(androidDir);
+      const report = {
+        present,
+        targets: [],
+        swiftPackages: [],
+        schemes: [],
+        appGroups: [],
+        permissions: [],
+        unknown: [],
+        confidence: {}
+      };
+      if (fs_1.default.existsSync(iosDir)) {
+        inspectIos(iosDir, report);
+      }
+      if (fs_1.default.existsSync(androidDir)) {
+        inspectAndroid(androidDir, report);
+      }
+      return report;
+    }
+    function inspectIos(iosDir, report) {
+      const xcodeproj = fs_1.default.readdirSync(iosDir).find((name) => name.endsWith(".xcodeproj"));
+      if (!xcodeproj) {
+        report.unknown.push("ios/ exists but no .xcodeproj was found");
+        return;
+      }
+      const pbx = path_12.default.join(iosDir, xcodeproj, "project.pbxproj");
+      if (!fs_1.default.existsSync(pbx))
+        return;
+      const contents = fs_1.default.readFileSync(pbx, "utf8");
+      for (const match of contents.matchAll(/name = ([^;]+);/g)) {
+        const name = match[1].replace(/"/g, "").trim();
+        if (name && !report.targets.includes(name) && !name.includes("/") && name.length < 80) {
+        }
+      }
+      for (const match of contents.matchAll(/isa = PBXNativeTarget;[\s\S]*?name = "?([A-Za-z0-9_.-]+)"?;/g)) {
+        const name = match[1];
+        if (!report.targets.includes(name))
+          report.targets.push(name);
+      }
+      for (const match of contents.matchAll(/repositoryURL = "?([^";]+)"?;/g)) {
+        report.swiftPackages.push(match[1]);
+        report.confidence[match[1]] = 0.9;
+      }
+      const schemesDir = path_12.default.join(iosDir, xcodeproj, "xcshareddata", "xcschemes");
+      if (fs_1.default.existsSync(schemesDir)) {
+        report.schemes = fs_1.default.readdirSync(schemesDir).filter((name) => name.endsWith(".xcscheme")).map((name) => name.replace(/\.xcscheme$/, ""));
+      }
+      const entitlements = walkFiles(iosDir, (file) => file.endsWith(".entitlements"));
+      for (const file of entitlements) {
+        const text = fs_1.default.readFileSync(file, "utf8");
+        for (const match of text.matchAll(/group\.[A-Za-z0-9.]+/g)) {
+          if (!report.appGroups.includes(match[0]))
+            report.appGroups.push(match[0]);
+        }
+      }
+      report.confidence.targets = report.targets.length ? 0.7 : 0;
+      report.confidence.schemes = report.schemes.length ? 0.85 : 0;
+    }
+    function inspectAndroid(androidDir, report) {
+      const manifest = path_12.default.join(androidDir, "app", "src", "main", "AndroidManifest.xml");
+      if (fs_1.default.existsSync(manifest)) {
+        const text = fs_1.default.readFileSync(manifest, "utf8");
+        for (const match of text.matchAll(/android:name="(android\.permission\.[A-Z_]+)"/g)) {
+          report.permissions.push(match[1]);
+        }
+        report.confidence.permissions = report.permissions.length ? 0.8 : 0;
+      }
+      const gradle = path_12.default.join(androidDir, "gradle.properties");
+      if (fs_1.default.existsSync(gradle)) {
+        const text = fs_1.default.readFileSync(gradle, "utf8");
+        if (/android\.minSdkVersion/.test(text)) {
+          report.confidence.minSdkVersion = 0.9;
+        }
+      }
+    }
+    function walkFiles(root, predicate) {
+      const out = [];
+      const stack = [root];
+      while (stack.length) {
+        const dir = stack.pop();
+        let entries = [];
+        try {
+          entries = fs_1.default.readdirSync(dir, { withFileTypes: true });
+        } catch {
+          continue;
+        }
+        for (const entry of entries) {
+          if (entry.name === "Pods" || entry.name === "build" || entry.name === "node_modules")
+            continue;
+          const full = path_12.default.join(dir, entry.name);
+          if (entry.isDirectory())
+            stack.push(full);
+          else if (predicate(full))
+            out.push(full);
+        }
+      }
+      return out;
+    }
+    function writeMigratedConfig(projectRoot, report) {
+      const dest = path_12.default.join(projectRoot, "workspace.config.ts");
+      if (fs_1.default.existsSync(dest)) {
+        throw new Error(`Refusing to overwrite existing ${dest}`);
+      }
+      const extraTargets = report.targets.filter((name) => !/Tests$/i.test(name));
+      const targetBlocks = extraTargets.map((name) => `      // TODO: confirm type (share | widget | clip). Confidence ${report.confidence.targets ?? 0.5}
+      { name: ${JSON.stringify(name)}, type: 'share' as const },`).join("\n");
+      const packages = report.swiftPackages.map((url) => `      swiftPackage({
+        url: ${JSON.stringify(url)},
+        requirement: { kind: 'upToNextMajorVersion', minimumVersion: '1.0.0' },
+        products: [/* TODO */],
+      }),`).join("\n");
+      const schemes = report.schemes.map((name) => `      { name: ${JSON.stringify(name)}, configuration: 'Debug' as const },`).join("\n");
+      const permissions = report.permissions.map((p) => `      ${JSON.stringify(p)},`).join("\n");
+      const unknown = report.unknown.map((u) => `// TODO: unmodeled \u2014 ${u}`).join("\n");
+      const contents = `import {
+  defineWorkspace,
+  shareExtension,
+  swiftPackage,
+} from 'expo-workspaces';
+
+${unknown}
+
+export default defineWorkspace({
+  schemaVersion: 1,
+  ios: {
+    targets: [
+${targetBlocks || "      // no extra targets detected"}
+    ],
+    packages: [
+${packages || "      // no Swift packages detected"}
+    ],
+    schemes: [
+${schemes || "      // no extra schemes detected"}
+    ],
+  },
+  android: {
+    permissions: [
+${permissions || "      // no extra permissions detected"}
+    ],
+  },
+});
+`;
+      fs_1.default.writeFileSync(dest, contents);
+      return dest;
+    }
   }
 });
 
-// packages/expo-workspaces/build/helpers.js
-var require_helpers = __commonJS({
-  "packages/expo-workspaces/build/helpers.js"(exports2) {
-    "use strict";
-    Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.defineWorkspace = defineWorkspace;
-    exports2.shareExtension = shareExtension;
-    exports2.widgetExtension = widgetExtension;
-    exports2.appClip = appClip;
-    exports2.swiftPackage = swiftPackage;
-    exports2.localSwiftPackage = localSwiftPackage;
-    exports2.scheme = scheme;
-    function defineWorkspace(config) {
-      return config;
-    }
-    function shareExtension(spec) {
-      return { ...spec, type: "share" };
-    }
-    function widgetExtension(spec) {
-      return { ...spec, type: "widget" };
-    }
-    function appClip(spec) {
-      return { ...spec, type: "clip" };
-    }
-    function swiftPackage(spec) {
-      return spec;
-    }
-    function localSwiftPackage(spec) {
-      return spec;
-    }
-    function scheme(spec) {
-      return spec;
-    }
-  }
-});
-
-// packages/expo-workspaces/build/index.js
+// packages/expo-workspaces/build/cli.js
+var __importDefault = exports && exports.__importDefault || function(mod) {
+  return mod && mod.__esModule ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.scheme = exports.localSwiftPackage = exports.swiftPackage = exports.appClip = exports.widgetExtension = exports.shareExtension = exports.defineWorkspace = exports.withWorkspace = void 0;
-var config_plugins_1 = require("@expo/config-plugins");
-var withWorkspace_1 = require_withWorkspace();
-Object.defineProperty(exports, "withWorkspace", { enumerable: true, get: function() {
-  return withWorkspace_1.withWorkspace;
-} });
-var plugin = (0, config_plugins_1.createRunOncePlugin)(withWorkspace_1.withWorkspace, "expo-workspaces", "0.1.0");
-exports.default = plugin;
-var helpers_1 = require_helpers();
-Object.defineProperty(exports, "defineWorkspace", { enumerable: true, get: function() {
-  return helpers_1.defineWorkspace;
-} });
-Object.defineProperty(exports, "shareExtension", { enumerable: true, get: function() {
-  return helpers_1.shareExtension;
-} });
-Object.defineProperty(exports, "widgetExtension", { enumerable: true, get: function() {
-  return helpers_1.widgetExtension;
-} });
-Object.defineProperty(exports, "appClip", { enumerable: true, get: function() {
-  return helpers_1.appClip;
-} });
-Object.defineProperty(exports, "swiftPackage", { enumerable: true, get: function() {
-  return helpers_1.swiftPackage;
-} });
-Object.defineProperty(exports, "localSwiftPackage", { enumerable: true, get: function() {
-  return helpers_1.localSwiftPackage;
-} });
-Object.defineProperty(exports, "scheme", { enumerable: true, get: function() {
-  return helpers_1.scheme;
-} });
+exports.runCli = runCli;
+var path_1 = __importDefault(require("path"));
+var core_1 = require_build();
+var engine_1 = require_engine();
+var migrate_1 = require_migrate();
+function parseArgs(argv) {
+  const args = argv.slice(2);
+  const flags = /* @__PURE__ */ new Set();
+  const values = {};
+  const takesValue = /* @__PURE__ */ new Set(["--project", "--config", "--manifest", "--id"]);
+  const positional = [];
+  for (let i = 0; i < args.length; i += 1) {
+    const token = args[i];
+    if (takesValue.has(token)) {
+      values[token] = args[i + 1] ?? "";
+      i += 1;
+      continue;
+    }
+    if (token.startsWith("-")) {
+      flags.add(token);
+      continue;
+    }
+    positional.push(token);
+  }
+  return {
+    command: positional[0] ?? "help",
+    json: flags.has("--json"),
+    ci: flags.has("--ci"),
+    verbose: flags.has("--verbose") || flags.has("-v"),
+    write: flags.has("--write"),
+    configPath: values["--config"] || values["--manifest"] || void 0,
+    projectRoot: path_1.default.resolve(values["--project"] || process.cwd()),
+    id: values["--id"] || positional[1]
+  };
+}
+function fail(message, code = core_1.EXIT_TOOL_FAILURE) {
+  console.error(`[expo-workspaces] ${message}`);
+  process.exit(code);
+}
+function printDiagnostics(title, diagnostics, json) {
+  if (json) {
+    const errors2 = diagnostics.filter((d) => d.severity === "error").length;
+    const warnings2 = diagnostics.filter((d) => d.severity === "warning").length;
+    console.log(JSON.stringify({ title, errors: errors2, warnings: warnings2, diagnostics }, null, 2));
+    return;
+  }
+  console.log(title);
+  if (diagnostics.length === 0) {
+    console.log("\u2713 healthy");
+    return;
+  }
+  for (const d of diagnostics) {
+    const mark = d.severity === "error" ? "\u2717" : d.severity === "warning" ? "\u26A0" : "\xB7";
+    const loc = d.source ? `  ${d.source}` : "";
+    console.log(`${mark} ${d.message}${loc}`);
+    if (d.hint)
+      console.log(`    ${d.hint}`);
+  }
+  const errors = diagnostics.filter((d) => d.severity === "error").length;
+  const warnings = diagnostics.filter((d) => d.severity === "warning").length;
+  console.log(`${errors} errors \xB7 ${warnings} warnings`);
+}
+function collectPlan(args) {
+  const ctx = (0, core_1.createGeneratorContext)(args.projectRoot, args.configPath);
+  return (0, core_1.collectWorkspacePlan)(engine_1.workspaceGenerators, ctx);
+}
+function runPlan(args) {
+  const plan = collectPlan(args);
+  const doc = (0, core_1.buildPlanDocument)(plan);
+  if (args.json) {
+    console.log(JSON.stringify(doc, null, 2));
+  } else {
+    console.log(`Config  ${doc.configPath}`);
+    console.log((0, core_1.renderPlanHuman)(doc, args.verbose));
+  }
+  return core_1.EXIT_OK;
+}
+function runValidate(args) {
+  try {
+    const loaded = (0, core_1.loadWorkspaceConfig)(args.projectRoot, args.configPath);
+    const plan = collectPlan(args);
+    const diagnostics = (0, core_1.runDoctor)({
+      projectRoot: args.projectRoot,
+      configPath: loaded.configPath,
+      manifest: loaded.manifest,
+      appConfig: (0, core_1.loadAppConfig)(args.projectRoot),
+      plan,
+      nodeVersion: process.versions.node
+    }).filter((d) => d.severity === "error");
+    if (args.json) {
+      console.log(JSON.stringify({ valid: diagnostics.length === 0, configPath: loaded.configPath, diagnostics }, null, 2));
+    } else if (diagnostics.length === 0) {
+      console.log(`\u2713 ${loaded.loadedAs} is valid`);
+    } else {
+      printDiagnostics("Validate", diagnostics, false);
+    }
+    return (0, core_1.exitCodeFor)(diagnostics);
+  } catch (error) {
+    fail(error.message, core_1.EXIT_ERROR);
+  }
+}
+function runDoctorCommand(args) {
+  try {
+    const loaded = (0, core_1.loadWorkspaceConfig)(args.projectRoot, args.configPath);
+    const plan = collectPlan(args);
+    const diagnostics = (0, core_1.runDoctor)({
+      projectRoot: args.projectRoot,
+      configPath: loaded.configPath,
+      manifest: loaded.manifest,
+      appConfig: (0, core_1.loadAppConfig)(args.projectRoot),
+      plan,
+      nodeVersion: process.versions.node
+    });
+    printDiagnostics("Expo Workspace Doctor", diagnostics, args.json);
+    return (0, core_1.exitCodeFor)(diagnostics);
+  } catch (error) {
+    fail(error.message, core_1.EXIT_ERROR);
+  }
+}
+function runExplain(args) {
+  const doc = (0, core_1.buildPlanDocument)(collectPlan(args));
+  const ops = args.id ? doc.operations.filter((op) => op.id === args.id || op.label === args.id) : doc.operations;
+  if (args.id && ops.length === 0) {
+    fail(`No operation matching "${args.id}"`, core_1.EXIT_ERROR);
+  }
+  if (args.json) {
+    console.log(JSON.stringify(ops, null, 2));
+    return core_1.EXIT_OK;
+  }
+  for (const op of ops) {
+    console.log(`${op.id}`);
+    console.log(`  kind      ${op.kind}`);
+    console.log(`  source    ${op.source}`);
+    console.log(`  status    ${op.status}`);
+    console.log(`  label     ${op.label}`);
+    if (op.files?.length)
+      console.log(`  files     ${op.files.join(", ")}`);
+    if (op.risk)
+      console.log(`  risk      ${op.risk}`);
+    console.log("");
+  }
+  return core_1.EXIT_OK;
+}
+function runDiff(args) {
+  const plan = collectPlan(args);
+  const doc = (0, core_1.buildPlanDocument)(plan);
+  const report = (0, migrate_1.inspectNativeProject)(args.projectRoot);
+  const declaredTargets = new Set(doc.operations.filter((op) => op.kind === "ios.target.add" && op.desired && typeof op.desired === "object").flatMap((op) => {
+    const desired = op.desired;
+    if (Array.isArray(desired))
+      return desired.map((t) => t.name).filter(Boolean);
+    return desired.name ? [desired.name] : [];
+  }));
+  const extras = report.targets.filter((name) => !declaredTargets.has(name) && !isStockTarget(name));
+  const missing = [...declaredTargets].filter((name) => !report.targets.includes(name));
+  const payload = {
+    generated: report.present,
+    declaredTargets: [...declaredTargets],
+    nativeTargets: report.targets,
+    missingFromNative: missing,
+    extraOnNative: extras,
+    schemes: report.schemes,
+    swiftPackages: report.swiftPackages
+  };
+  if (args.json) {
+    console.log(JSON.stringify(payload, null, 2));
+  } else if (!report.present) {
+    console.log("No generated ios/ or android/ project found. Run expo prebuild first.");
+  } else {
+    console.log("Declared vs generated native state");
+    if (missing.length === 0 && extras.length === 0) {
+      console.log("\u2713 targets match configuration");
+    }
+    for (const name of missing)
+      console.log(`- missing native target ${name}`);
+    for (const name of extras)
+      console.log(`+ extra native target ${name}`);
+  }
+  return extras.length || missing.length ? core_1.EXIT_ERROR : core_1.EXIT_OK;
+}
+function isStockTarget(name) {
+  return /(Tests|Watch|Pods)$/i.test(name);
+}
+function runMigrate(args) {
+  const report = (0, migrate_1.inspectNativeProject)(args.projectRoot);
+  if (args.json) {
+    console.log(JSON.stringify(report, null, 2));
+  } else {
+    printMigration(report);
+  }
+  if (args.write) {
+    const dest = (0, migrate_1.writeMigratedConfig)(args.projectRoot, report);
+    console.log(`Wrote ${dest}`);
+  }
+  return core_1.EXIT_OK;
+}
+function printMigration(report) {
+  console.log("Detected native customizations");
+  if (!report.present) {
+    console.log("\xB7 no ios/ or android/ directories \u2014 nothing to migrate");
+    return;
+  }
+  console.log(`\u2713 ${report.targets.length} native targets`);
+  console.log(`\u2713 ${report.swiftPackages.length} Swift packages`);
+  console.log(`\u2713 ${report.schemes.length} schemes`);
+  console.log(`\u2713 ${report.appGroups.length} App Groups`);
+  console.log(`\u2713 ${report.permissions.length} Android permissions`);
+  for (const unknown of report.unknown) {
+    console.log(`? ${unknown} (unmodeled \u2014 will emit a TODO)`);
+  }
+}
+function help() {
+  console.log(`expo-workspaces <command>
+
+Commands:
+  plan       Render the semantic operation plan (no native writes)
+  validate   Validate config schema and semantic constraints
+  doctor     Environment, config, and native-intent checks
+  explain    Explain why an operation exists (--id <op id>)
+  diff       Compare declared intent with generated native state
+  migrate    Inspect an existing native project (add --write to emit config)
+
+Options:
+  --json --ci --verbose --write --config <path> --project <dir> --id <op>
+`);
+  return core_1.EXIT_OK;
+}
+async function runCli(argv = process.argv) {
+  const args = parseArgs(argv);
+  try {
+    switch (args.command) {
+      case "plan":
+        return runPlan(args);
+      case "validate":
+        return runValidate(args);
+      case "doctor":
+        return runDoctorCommand(args);
+      case "explain":
+        return runExplain(args);
+      case "diff":
+        return runDiff(args);
+      case "migrate":
+        return runMigrate(args);
+      case "help":
+      case "--help":
+      case "-h":
+        return help();
+      default:
+        fail(`Unknown command "${args.command}". Run expo-workspaces help.`);
+    }
+  } catch (error) {
+    fail(error.stack ?? error.message, core_1.EXIT_TOOL_FAILURE);
+  }
+}
+if (require.main === module) {
+  void runCli().then((code) => process.exit(code));
+}

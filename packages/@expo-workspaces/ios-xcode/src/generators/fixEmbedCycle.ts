@@ -27,7 +27,9 @@ export const fixEmbedCycleGenerator: Generator = {
 
     return {
       ops: [
-        pbxOp('fixEmbedCycle', ({ project }) => {
+        pbxOp(
+          'fixEmbedCycle',
+          ({ project }) => {
           for (const target of project.rootObject.props.targets) {
             const productType = cleanName((target.props as { productType?: unknown }).productType);
             if (productType !== APP_PRODUCT_TYPE) {
@@ -55,7 +57,18 @@ export const fixEmbedCycleGenerator: Generator = {
             }
             buildPhases.splice(resourcesIndex + 1, 0, embedPhase);
           }
-        }),
+        },
+          {
+            id: 'xcode.embedCycle',
+            platform: 'ios',
+            semanticKind: 'ios.xcode.embedCycle.fix',
+            source: 'ios.xcode',
+            status: 'update',
+            files: ['ios/*.xcodeproj/project.pbxproj'],
+            phase: 'finalized',
+            risk: 'low',
+          },
+        ),
       ],
     };
   },

@@ -1,7 +1,9 @@
 import type { ConfigPlugin } from '@expo/config-plugins';
 
-import { loadManifest } from './loadManifest';
-import { reportWarning } from './report';
+import { loadAppConfig } from './appConfig';
+import { loadWorkspaceConfig } from './loadConfig';
+import { collectWorkspacePlan } from './pipeline';
+import { reportInfo, reportWarning } from './report';
 import type { Executor, Generator, GeneratorContext, Op, WorkspaceAppConfig } from './types';
 
 export interface CreateWorkspaceOptions {
@@ -10,13 +12,15 @@ export interface CreateWorkspaceOptions {
 }
 
 export interface WithWorkspaceProps {
-  /** Path to the manifest, relative to the app root. Defaults to `workspace.manifest.js`. */
+  /** Path to the workspace config, relative to the app root. */
+  configPath?: string;
+  /** @deprecated Use configPath. */
   manifestPath?: string;
 }
 
 /**
  * Builds the workspace ConfigPlugin from a composed set of generators + executors.
- * Pipeline: load raw manifest → contributeConfig → collect ops → run executors.
+ * Pipeline: load config → normalize → contributeConfig → collect ops → run executors.
  */
 export function createWorkspace({
   generators,
@@ -26,36 +30,40 @@ export function createWorkspace({
     const projectRoot =
       (config as { _internal?: { projectRoot?: string } })._internal?.projectRoot ?? process.cwd();
 
-    const manifest = loadManifest(projectRoot, props.manifestPath);
+    const loaded = loadWorkspaceConfig(projectRoot, props.configPath ?? props.manifestPath);
+    reportInfo(`loaded ${loaded.loadedAs} (${loaded.configPath})`);
+
     const ctx: GeneratorContext = {
-      manifest,
+      manifest: loaded.manifest,
       config: config as unknown as WorkspaceAppConfig,
       projectRoot,
+      configPath: loaded.configPath,
     };
 
-    // 1. Static config contributions (e.g. EAS appExtensions).
-    for (const generator of generators) {
-      if (generator.contributeConfig) {
-        ctx.config = generator.contributeConfig(ctx.config, ctx);
-      }
-    }
-    config = ctx.config as unknown as typeof config;
-
-    // 2. Collect the declarative op plan.
-    const ops: Op[] = [];
-    for (const generator of generators) {
-      const result = generator.generate(ctx);
-      ops.push(...result.ops);
-      for (const warning of result.warnings ?? []) {
-        reportWarning(`${generator.name}: ${warning}`);
-      }
+    const plan = collectWorkspacePlan(generators, ctx);
+    for (const warning of plan.warnings) {
+      reportWarning(warning);
     }
 
-    // 3. Dispatch ops to each executor (each handles the kinds it recognizes).
+    let next = plan.config as unknown as typeof config;
     for (const executor of executors) {
-      config = executor(config, ops);
+      next = executor(next, plan.ops as Op[]);
     }
+    return next;
+  };
+}
 
-    return config;
+/** CLI helper: load config + app.json without running Expo mods. */
+export function createGeneratorContext(
+  projectRoot: string,
+  configPath?: string,
+  appConfig?: WorkspaceAppConfig,
+): GeneratorContext {
+  const loaded = loadWorkspaceConfig(projectRoot, configPath);
+  return {
+    manifest: loaded.manifest,
+    config: appConfig ?? loadAppConfig(projectRoot),
+    projectRoot,
+    configPath: loaded.configPath,
   };
 }
