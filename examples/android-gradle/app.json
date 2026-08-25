@@ -1,0 +1,10 @@
+{
+  "expo": {
+    "name": "Android Gradle Example",
+    "slug": "android-gradle-example",
+    "version": "1.0.0",
+    "ios": { "bundleIdentifier": "com.acme.androidgradle" },
+    "android": { "package": "com.acme.androidgradle" },
+    "plugins": ["expo-workspaces"]
+  }
+}

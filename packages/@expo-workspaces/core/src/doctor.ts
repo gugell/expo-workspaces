@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 
 import type { Diagnostic } from './diagnostics';
+import { asRecordArray, asStringArray, compareDottedVersions, isRecord } from './guards';
 import type { WorkspacePlan } from './pipeline';
 import { isLiteralSecret } from './secrets';
 import type { RawManifest, WorkspaceAppConfig } from './types';
@@ -116,7 +117,7 @@ export const builtinDoctorRules: DoctorRule[] = [
       const diagnostics: Diagnostic[] = [];
       targetList(manifest).forEach((target, index) => {
         const dt = typeof target.deploymentTarget === 'string' ? target.deploymentTarget : undefined;
-        if (dt && compareVersions(dt, floor) < 0) {
+        if (dt && compareDottedVersions(dt, floor) < 0) {
           diagnostics.push({
             id: 'deployment-target',
             severity: 'warning',
@@ -168,11 +169,8 @@ export const builtinDoctorRules: DoctorRule[] = [
         ...asRecordArray(slice.local).map((pkg, i) => ({ pkg, source: `ios.packages.local[${i}]` })),
       ];
       for (const { pkg, source } of packages) {
-        const refs = [...asStringArray(pkg.target), ...asStringArray(pkg.podTarget)];
-        for (const name of refs) {
-          if (targetNames.size > 0 && !targetNames.has(name) && name !== 'Pods') {
-            // podTarget names live in Pods.xcodeproj — skip those.
-            if (asStringArray(pkg.podTarget).includes(name)) continue;
+        for (const name of asStringArray(pkg.target)) {
+          if (targetNames.size > 0 && !targetNames.has(name)) {
             diagnostics.push({
               id: 'spm-targets',
               severity: 'error',
@@ -221,21 +219,6 @@ function targetList(manifest: RawManifest): Record<string, unknown>[] {
   return asRecordArray(manifest.targets);
 }
 
-function asRecordArray(value: unknown): Record<string, unknown>[] {
-  if (!Array.isArray(value)) return [];
-  return value.filter(isRecord);
-}
-
-function asStringArray(value: unknown): string[] {
-  if (typeof value === 'string' && value) return [value];
-  if (!Array.isArray(value)) return [];
-  return value.filter((v): v is string => typeof v === 'string' && v.length > 0);
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-}
-
 function duplicateDiagnostics(id: string, values: string[], label: string): Diagnostic[] {
   const seen = new Set<string>();
   const diagnostics: Diagnostic[] = [];
@@ -247,18 +230,6 @@ function duplicateDiagnostics(id: string, values: string[], label: string): Diag
     seen.add(value);
   }
   return diagnostics;
-}
-
-function compareVersions(a: string, b: string): number {
-  const pa = a.split('.').map((n) => Number.parseInt(n, 10) || 0);
-  const pb = b.split('.').map((n) => Number.parseInt(n, 10) || 0);
-  const len = Math.max(pa.length, pb.length);
-  for (let i = 0; i < len; i += 1) {
-    const da = pa[i] ?? 0;
-    const db = pb[i] ?? 0;
-    if (da !== db) return da - db;
-  }
-  return 0;
 }
 
 function readExpoSdk(projectRoot: string): number | null {

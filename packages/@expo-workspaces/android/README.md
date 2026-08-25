@@ -2,28 +2,34 @@
 
 > Android Gradle/manifest capability for [`expo-workspaces`](../../expo-workspaces).
 
-Drives Android config from the manifest's `android` slice using Expo's typed Android mods (`withGradleProperties`, `withAppBuildGradle`, `withProjectBuildGradle`, `withAndroidManifest`).
+Drives Android config from the `android` slice using Expo's typed Android mods (`withGradleProperties`, `withAppBuildGradle`, `withProjectBuildGradle`, `withAndroidManifest`).
 
 ## Manifest keys
 
-```js
+```ts
 android: {
-  minSdkVersion: 24,
+  minSdkVersion: 26,
   compileSdkVersion: 35,
-  targetSdkVersion: 34,
-  buildToolsVersion: '35.0.0',
-  ndkVersion: '26.1.10909125',
-  kotlinVersion: '1.9.24',
+  targetSdkVersion: 35,
   gradleProperties: { 'org.gradle.jvmargs': '-Xmx4g' },
+  dependencies: [
+    { module: 'androidx.work:work-runtime-ktx:2.9.1' },
+    { module: 'androidx.security:security-crypto:1.1.0-alpha06', configuration: 'api' },
+  ],
   permissions: ['android.permission.RECORD_AUDIO'],
-  dependencies: ["implementation 'androidx.work:work-runtime:2.9.0'"],
+  features: [{ name: 'android.hardware.camera', required: false }],
   applicationAttributes: { 'android:largeHeap': 'true' },
-  signing: { storeFile: 'release.keystore', storePassword: '…', keyAlias: 'upload', keyPassword: '…' },
+  signing: {
+    storeFile: 'release.keystore',
+    storePassword: { env: 'EXPO_WORKSPACE_RELEASE_STORE_PASSWORD' },
+    keyAlias: 'upload',
+    keyPassword: { env: 'EXPO_WORKSPACE_RELEASE_KEY_PASSWORD' },
+  },
 }
 ```
 
-SDK/toolchain versions are written as `android.*` keys in `gradle.properties` (read by Expo's `android/build.gradle`). Full mapping: [`docs/android.md`](../../../docs/android.md).
+SDK/toolchain versions are written as `android.*` keys in `gradle.properties`. Full mapping: [`docs/android.md`](../../../docs/android.md). Examples: `examples/android-gradle`, `examples/android-manifest`.
 
-Exports: `androidGenerator`, `androidExecutor`, types. Depends on `@expo-workspaces/core`.
+Exports: `androidGenerator`, `androidExecutor`, `androidLibrary`, `androidFeature`, types. Depends on `@expo-workspaces/core`.
 
 MIT

@@ -212,16 +212,17 @@ Each patch targets one file; provide exactly one operation.
   ndkVersion?: string;          // → android.ndkVersion
   kotlinVersion?: string;       // → android.kotlinVersion
   gradleProperties?: Record<string, string | number | boolean>;
-  permissions?: string[];       // uses-permission in AndroidManifest.xml
-  dependencies?: string[];      // lines added to app/build.gradle dependencies { }
+  permissions?: string[];       // <uses-permission> in AndroidManifest.xml
+  features?: Array<string | { name: string; required?: boolean; glEsVersion?: string }>;
+  dependencies?: Array<string | { module: string; configuration?: GradleConfiguration }>;
   applicationAttributes?: Record<string, string>; // <application> attrs (e.g. "android:largeHeap")
   signing?: {                   // release signingConfig (credentials → gradle.properties)
     storeFile: string;          // relative to android/app
-    storePassword: string;
+    storePassword: SecretInput; // prefer { env: "VAR" }
     keyAlias: string;
-    keyPassword: string;
+    keyPassword: SecretInput;
   };
 }
 ```
 
-SDK/toolchain versions are written as `android.*` keys in `gradle.properties`, which Expo's `android/build.gradle` reads via `findProperty`. See [`android.md`](android.md).
+Use `androidLibrary('group:artifact:version')` and `androidFeature('android.hardware.camera', false)` from `expo-workspaces` instead of raw Groovy when you can. SDK/toolchain versions are written as `android.*` keys in `gradle.properties`, which Expo's `android/build.gradle` reads via `findProperty`. See [`android.md`](android.md) and the `android-gradle` / `android-manifest` examples.

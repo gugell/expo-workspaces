@@ -1,15 +1,5 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { ExampleApp } from '../_shared/ExampleApp';
 
 export default function App() {
-  return (
-    <View style={styles.container}>
-      <Text>Share Extension example</Text>
-      <StatusBar style="auto" />
-    </View>
-  );
+  return <ExampleApp title="Multi-scheme example" />;
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-});

@@ -14,6 +14,7 @@ import type {
   AndroidGradleReplaceOp,
   AndroidManifestAppAttributeOp,
   AndroidManifestPermissionOp,
+  AndroidManifestUsesFeatureOp,
   AndroidOp,
   GradleFile,
 } from './types';
@@ -73,6 +74,7 @@ function applyManifest(
   manifest: any,
   permissions: AndroidManifestPermissionOp[],
   attributes: AndroidManifestAppAttributeOp[],
+  features: AndroidManifestUsesFeatureOp[],
 ): void {
   for (const op of permissions) {
     AndroidConfig.Permissions.ensurePermission(manifest, op.permission);
@@ -84,6 +86,31 @@ function applyManifest(
       (application.$ as Record<string, string>)[op.name] = op.value;
     }
   }
+  for (const op of features) {
+    ensureUsesFeature(manifest, op);
+  }
+}
+
+function ensureUsesFeature(manifest: any, op: AndroidManifestUsesFeatureOp): void {
+  const root = manifest.manifest as Record<string, unknown>;
+  const existing = root['uses-feature'];
+  const list: Array<{ $: Record<string, string> }> = Array.isArray(existing)
+    ? existing
+    : existing
+      ? [existing as { $: Record<string, string> }]
+      : [];
+  if (list.some((entry) => entry.$?.['android:name'] === op.name)) {
+    return;
+  }
+  const attrs: Record<string, string> = { 'android:name': op.name };
+  if (op.required === false) {
+    attrs['android:required'] = 'false';
+  }
+  if (op.glEsVersion) {
+    attrs['android:glEsVersion'] = op.glEsVersion;
+  }
+  list.push({ $: attrs });
+  root['uses-feature'] = list;
 }
 
 /** Applies android gradle/manifest ops via Expo's typed android mods. */
@@ -108,6 +135,9 @@ export const androidExecutor: Executor = (config, ops: Op[]) => {
   const attributes = androidOps.filter(
     (o): o is AndroidManifestAppAttributeOp => o.kind === 'androidManifestAppAttribute',
   );
+  const features = androidOps.filter(
+    (o): o is AndroidManifestUsesFeatureOp => o.kind === 'androidManifestUsesFeature',
+  );
 
   if (properties.length > 0) {
     config = withGradleProperties(config as any, (cfg: any) => {
@@ -124,9 +154,9 @@ export const androidExecutor: Executor = (config, ops: Op[]) => {
     }
   }
 
-  if (permissions.length > 0 || attributes.length > 0) {
+  if (permissions.length > 0 || attributes.length > 0 || features.length > 0) {
     config = withAndroidManifest(config as any, (cfg: any) => {
-      applyManifest(cfg.modResults, permissions, attributes);
+      applyManifest(cfg.modResults, permissions, attributes, features);
       return cfg;
     }) as typeof config;
   }

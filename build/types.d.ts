@@ -198,6 +198,32 @@ export interface AndroidSigningConfig {
   keyPassword?: SecretInput;
 }
 
+export type GradleConfiguration =
+  | 'implementation'
+  | 'api'
+  | 'compileOnly'
+  | 'runtimeOnly'
+  | 'debugImplementation'
+  | 'releaseImplementation';
+
+export interface AndroidLibraryDependency {
+  /** Gradle configuration. Defaults to `implementation`. */
+  configuration?: GradleConfiguration;
+  /** Maven coordinate, e.g. `androidx.work:work-runtime:2.9.0`. */
+  module: string;
+}
+
+/** Raw Gradle line or a structured coordinate. */
+export type AndroidDependency = string | AndroidLibraryDependency;
+
+export interface AndroidUsesFeature {
+  name: string;
+  required?: boolean;
+  glEsVersion?: string;
+}
+
+export type AndroidFeature = string | AndroidUsesFeature;
+
 export interface AndroidSlice {
   minSdkVersion?: number;
   compileSdkVersion?: number;
@@ -207,7 +233,13 @@ export interface AndroidSlice {
   kotlinVersion?: string;
   gradleProperties?: Record<string, string | number | boolean>;
   permissions?: string[];
-  dependencies?: string[];
+  /**
+   * App Gradle dependencies. Prefer `{ module, configuration }` over raw Groovy
+   * lines so plan/doctor can show coordinates instead of opaque strings.
+   */
+  dependencies?: AndroidDependency[];
+  /** `<uses-feature>` entries in AndroidManifest.xml. */
+  features?: AndroidFeature[];
   applicationAttributes?: Record<string, string>;
   signing?: AndroidSigningConfig;
 }
@@ -251,4 +283,4 @@ export type WorkspaceConfig = {
   ios?: IOSWorkspaceConfig;
   android?: AndroidSlice;
   patches?: FilePatch[];
-} & Partial<WorkspaceManifest>;
+};

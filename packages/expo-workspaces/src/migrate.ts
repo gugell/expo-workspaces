@@ -1,6 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 
+import { inspectXcodeProject } from '@expo-workspaces/ios-xcode';
+
 export interface MigrationReport {
   present: boolean;
   targets: string[];
@@ -8,6 +10,9 @@ export interface MigrationReport {
   schemes: string[];
   appGroups: string[];
   permissions: string[];
+  features: string[];
+  dependencies: string[];
+  gradleSdk: Record<string, string>;
   unknown: string[];
   confidence: Record<string, number>;
 }
@@ -24,6 +29,9 @@ export function inspectNativeProject(projectRoot: string): MigrationReport {
     schemes: [],
     appGroups: [],
     permissions: [],
+    features: [],
+    dependencies: [],
+    gradleSdk: {},
     unknown: [],
     confidence: {},
   };
@@ -43,35 +51,13 @@ function inspectIos(iosDir: string, report: MigrationReport): void {
     report.unknown.push('ios/ exists but no .xcodeproj was found');
     return;
   }
-  const pbx = path.join(iosDir, xcodeproj, 'project.pbxproj');
-  if (!fs.existsSync(pbx)) return;
-  const contents = fs.readFileSync(pbx, 'utf8');
 
-  for (const match of contents.matchAll(/name = ([^;]+);/g)) {
-    const name = match[1].replace(/"/g, '').trim();
-    if (name && !report.targets.includes(name) && !name.includes('/') && name.length < 80) {
-      // pbxproj has many name = fields; keep product-looking names later via PBXNativeTarget isa blocks
-    }
-  }
-
-  for (const match of contents.matchAll(
-    /isa = PBXNativeTarget;[\s\S]*?name = "?([A-Za-z0-9_.-]+)"?;/g,
-  )) {
-    const name = match[1];
-    if (!report.targets.includes(name)) report.targets.push(name);
-  }
-
-  for (const match of contents.matchAll(/repositoryURL = "?([^";]+)"?;/g)) {
-    report.swiftPackages.push(match[1]);
-    report.confidence[match[1]] = 0.9;
-  }
-
-  const schemesDir = path.join(iosDir, xcodeproj, 'xcshareddata', 'xcschemes');
-  if (fs.existsSync(schemesDir)) {
-    report.schemes = fs
-      .readdirSync(schemesDir)
-      .filter((name) => name.endsWith('.xcscheme'))
-      .map((name) => name.replace(/\.xcscheme$/, ''));
+  const inspected = inspectXcodeProject(iosDir);
+  report.targets = inspected.targets;
+  report.swiftPackages = inspected.swiftPackages;
+  report.schemes = inspected.schemes;
+  for (const url of inspected.swiftPackages) {
+    report.confidence[url] = 0.9;
   }
 
   const entitlements = walkFiles(iosDir, (file) => file.endsWith('.entitlements'));
@@ -82,7 +68,7 @@ function inspectIos(iosDir: string, report: MigrationReport): void {
     }
   }
 
-  report.confidence.targets = report.targets.length ? 0.7 : 0;
+  report.confidence.targets = report.targets.length ? 0.85 : 0;
   report.confidence.schemes = report.schemes.length ? 0.85 : 0;
 }
 
@@ -90,17 +76,37 @@ function inspectAndroid(androidDir: string, report: MigrationReport): void {
   const manifest = path.join(androidDir, 'app', 'src', 'main', 'AndroidManifest.xml');
   if (fs.existsSync(manifest)) {
     const text = fs.readFileSync(manifest, 'utf8');
-    for (const match of text.matchAll(/android:name="(android\.permission\.[A-Z_]+)"/g)) {
-      report.permissions.push(match[1]);
+    for (const match of text.matchAll(/<uses-permission\b[^>]*android:name="([^"]+)"/g)) {
+      if (!report.permissions.includes(match[1])) report.permissions.push(match[1]);
+    }
+    for (const match of text.matchAll(/<uses-feature\b[^>]*android:name="([^"]+)"/g)) {
+      if (!report.features.includes(match[1])) report.features.push(match[1]);
     }
     report.confidence.permissions = report.permissions.length ? 0.8 : 0;
+    report.confidence.features = report.features.length ? 0.8 : 0;
   }
+
   const gradle = path.join(androidDir, 'gradle.properties');
   if (fs.existsSync(gradle)) {
     const text = fs.readFileSync(gradle, 'utf8');
-    if (/android\.minSdkVersion/.test(text)) {
-      report.confidence.minSdkVersion = 0.9;
+    for (const match of text.matchAll(/^(android\.(?:minSdkVersion|compileSdkVersion|targetSdkVersion|buildToolsVersion|ndkVersion|kotlinVersion))=(.+)$/gm)) {
+      report.gradleSdk[match[1]] = match[2].trim();
     }
+    if (Object.keys(report.gradleSdk).length) {
+      report.confidence.gradleSdk = 0.9;
+    }
+  }
+
+  const appGradle = path.join(androidDir, 'app', 'build.gradle');
+  if (fs.existsSync(appGradle)) {
+    const text = fs.readFileSync(appGradle, 'utf8');
+    for (const match of text.matchAll(
+      /^\s*(implementation|api|compileOnly|runtimeOnly|debugImplementation|releaseImplementation)\s+['"]([^'"]+)['"]/gm,
+    )) {
+      const line = `${match[1]} '${match[2]}'`;
+      if (!report.dependencies.includes(line)) report.dependencies.push(line);
+    }
+    report.confidence.dependencies = report.dependencies.length ? 0.6 : 0;
   }
 }
 
@@ -150,11 +156,26 @@ export function writeMigratedConfig(projectRoot: string, report: MigrationReport
     .map((name) => `      { name: ${JSON.stringify(name)}, configuration: 'Debug' as const },`)
     .join('\n');
   const permissions = report.permissions.map((p) => `      ${JSON.stringify(p)},`).join('\n');
+  const features = report.features.map((name) => `      androidFeature(${JSON.stringify(name)}),`).join('\n');
+  const dependencies = report.dependencies
+    .map((line) => {
+      const match = line.match(/^(implementation|api|compileOnly|runtimeOnly|debugImplementation|releaseImplementation)\s+'([^']+)'$/);
+      if (match && match[1] === 'implementation') {
+        return `      androidLibrary(${JSON.stringify(match[2])}),`;
+      }
+      if (match) {
+        return `      androidLibrary(${JSON.stringify(match[2])}, ${JSON.stringify(match[1])}),`;
+      }
+      return `      ${JSON.stringify(line)},`;
+    })
+    .join('\n');
+  const minSdk = report.gradleSdk['android.minSdkVersion'];
   const unknown = report.unknown.map((u) => `// TODO: unmodeled — ${u}`).join('\n');
 
   const contents = `import {
+  androidFeature,
+  androidLibrary,
   defineWorkspace,
-  shareExtension,
   swiftPackage,
 } from 'expo-workspaces';
 
@@ -174,8 +195,14 @@ ${schemes || '      // no extra schemes detected'}
     ],
   },
   android: {
-    permissions: [
+${minSdk ? `    minSdkVersion: ${Number.parseInt(minSdk, 10) || minSdk},\n` : ''}    permissions: [
 ${permissions || '      // no extra permissions detected'}
+    ],
+    features: [
+${features || '      // no uses-feature entries detected'}
+    ],
+    dependencies: [
+${dependencies || '      // no app Gradle dependencies detected'}
     ],
   },
 });

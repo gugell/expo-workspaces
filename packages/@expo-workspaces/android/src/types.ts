@@ -1,5 +1,11 @@
 import type { BaseOp, Op, SecretInput } from '@expo-workspaces/core';
 
+import type { AndroidDependency } from './dependencies';
+import type { AndroidFeature } from './features';
+
+export type { AndroidDependency, GradleConfiguration } from './dependencies';
+export type { AndroidFeature, AndroidUsesFeature } from './features';
+
 export interface AndroidSigningConfig {
   /** Keystore path relative to android/app (e.g. "release.keystore"). */
   storeFile: string;
@@ -20,9 +26,14 @@ export interface AndroidSlice {
   gradleProperties?: Record<string, string | number | boolean>;
   /** Permission names (e.g. "android.permission.RECORD_AUDIO"). */
   permissions?: string[];
-  /** Gradle dependency lines added to app/build.gradle (e.g. "implementation 'com.x:y:1.0'"). */
-  dependencies?: string[];
-  /** Attributes set on the AndroidManifest <application> element (e.g. { "android:largeHeap": "true" }). */
+  /**
+   * App Gradle dependencies. Prefer `{ module, configuration }` over raw Groovy
+   * lines so plan/doctor can show coordinates instead of opaque strings.
+   */
+  dependencies?: AndroidDependency[];
+  /** `<uses-feature>` entries in AndroidManifest.xml. */
+  features?: AndroidFeature[];
+  /** Attributes set on the AndroidManifest `<application>` element. */
   applicationAttributes?: Record<string, string>;
   /** Release signing config applied to app/build.gradle (credentials go to gradle.properties). */
   signing?: AndroidSigningConfig;
@@ -68,12 +79,20 @@ export interface AndroidManifestAppAttributeOp extends BaseOp {
   value: string;
 }
 
+export interface AndroidManifestUsesFeatureOp extends BaseOp {
+  kind: 'androidManifestUsesFeature';
+  name: string;
+  required?: boolean;
+  glEsVersion?: string;
+}
+
 export type AndroidOp =
   | AndroidGradlePropertyOp
   | AndroidGradleBlockOp
   | AndroidGradleReplaceOp
   | AndroidManifestPermissionOp
-  | AndroidManifestAppAttributeOp;
+  | AndroidManifestAppAttributeOp
+  | AndroidManifestUsesFeatureOp;
 
 const ANDROID_KINDS = new Set([
   'androidGradleProperty',
@@ -81,6 +100,7 @@ const ANDROID_KINDS = new Set([
   'androidGradleReplace',
   'androidManifestPermission',
   'androidManifestAppAttribute',
+  'androidManifestUsesFeature',
 ]);
 
 export function isAndroidOp(op: Op): op is AndroidOp {

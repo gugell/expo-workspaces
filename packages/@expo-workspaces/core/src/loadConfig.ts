@@ -87,18 +87,26 @@ function unwrapDefault(mod: unknown): unknown {
 function loadTypeScript(filePath: string): unknown {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const jiti = require('jiti') as (id: string, opts?: object) => (id: string) => unknown;
+  // interopDefault must stay false: workspace.config.ts uses named imports from
+  // expo-workspaces (helpers), and the package's default export is the Expo plugin.
   return jiti(__filename, {
-    interopDefault: true,
+    interopDefault: false,
     alias: {
-      'expo-workspaces': resolvePackageRoot(),
+      'expo-workspaces': resolveExpoWorkspacesModule(),
     },
   })(filePath);
 }
 
-function resolvePackageRoot(): string {
+function resolveExpoWorkspacesModule(): string {
   try {
-    return path.dirname(require.resolve('expo-workspaces/package.json'));
+    return require.resolve('expo-workspaces');
   } catch {
-    return path.resolve(__dirname, '..');
+    const bundled = path.resolve(__dirname, '../../../../build/index.js');
+    if (fs.existsSync(bundled)) return bundled;
+    try {
+      return require.resolve('@expo-workspaces/meta');
+    } catch {
+      return path.resolve(__dirname, '..');
+    }
   }
 }

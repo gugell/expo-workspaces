@@ -11,7 +11,7 @@ export { normalizeWorkspaceConfig } from './normalize';
 export { collectWorkspacePlan } from './pipeline';
 export type { WorkspacePlan } from './pipeline';
 export { withMeta, toPlanOperation } from './ops';
-export { buildPlanDocument, renderPlanHuman, serializeOpsForCompare } from './plan';
+export { buildPlanDocument, renderPlanHuman, serializeOpsForCompare, declaredTargetNames } from './plan';
 export type { PlanDocument, PlanSummary } from './plan';
 export { loadAppConfig } from './appConfig';
 export { runDoctor, builtinDoctorRules } from './doctor';
@@ -38,6 +38,7 @@ export {
 } from './validation';
 export type { XcodeBuildConfiguration, NameMatcher } from './validation';
 
+export { isRecord, asRecordArray, asStringArray, compareDottedVersions } from './guards';
 export { FILE_OP_KINDS, isFileOp } from './types';
 export type {
   WorkspaceAppConfig,

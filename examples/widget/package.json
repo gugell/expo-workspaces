@@ -9,10 +9,10 @@
     "prebuild": "expo prebuild"
   },
   "dependencies": {
-    "expo": "~56.0.20",
-    "expo-status-bar": "~56.0.0",
-    "expo-workspaces": "file:../..",
-    "react": "19.2.3",
-    "react-native": "0.85.0"
+    "expo": "catalog:",
+    "expo-status-bar": "catalog:",
+    "expo-workspaces": "workspace:*",
+    "react": "catalog:",
+    "react-native": "catalog:"
   }
 }

@@ -15,8 +15,10 @@ export {
   swiftPackage,
   localSwiftPackage,
   scheme,
+  androidLibrary,
+  androidFeature,
 } from './helpers';
-export type { WorkspaceManifest, WorkspaceConfig, IOSWorkspaceConfig } from './types';
+export type { WorkspaceManifest, WorkspaceConfig, IOSWorkspaceConfig, AndroidSlice } from './types';
 export type {
   IosPodsManifest,
   IosXcodeManifest,

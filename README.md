@@ -102,7 +102,7 @@ Exit codes: `0` healthy, `1` configuration/native error, `2` tool failure.
 
 ## Examples
 
-See [`examples/`](examples/). Each app is independently installable.
+See [`examples/`](examples/). Apps are pnpm workspace packages (`workspace:*` + catalogs).
 
 | Example | Intent |
 | --- | --- |
@@ -110,7 +110,8 @@ See [`examples/`](examples/). Each app is independently installable.
 | [widget](examples/widget) | WidgetKit target |
 | [native-dependencies](examples/native-dependencies) | SPM + CocoaPods |
 | [multi-scheme](examples/multi-scheme) | Shared Xcode schemes |
-| [android-config](examples/android-config) | SDK, permissions, env signing |
+| [android-gradle](examples/android-gradle) | SDK, Gradle properties, structured deps, env signing |
+| [android-manifest](examples/android-manifest) | permissions, uses-feature, application attributes |
 
 ## Compatibility
 

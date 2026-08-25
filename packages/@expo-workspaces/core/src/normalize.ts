@@ -1,11 +1,8 @@
+import { isRecord } from './guards';
 import { ERR } from './validation';
 import type { RawManifest } from './types';
 
 type Dict = Record<string, unknown>;
-
-function isObject(value: unknown): value is Dict {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-}
 
 function asArray<T>(value: unknown): T[] | undefined {
   return Array.isArray(value) ? (value as T[]) : undefined;
@@ -17,11 +14,11 @@ function asArray<T>(value: unknown): T[] | undefined {
  * RawManifest. Nested fields win when both are present.
  */
 export function normalizeWorkspaceConfig(raw: unknown): RawManifest {
-  if (!isObject(raw)) {
+  if (!isRecord(raw)) {
     throw new Error(`${ERR} Workspace config must export an object (received ${typeof raw}).`);
   }
 
-  const nestedIos = isObject(raw.ios) ? raw.ios : undefined;
+  const nestedIos = isRecord(raw.ios) ? raw.ios : undefined;
   const version = raw.schemaVersion ?? raw.manifestVersion ?? 1;
   if (version !== 1) {
     throw new Error(
@@ -35,7 +32,7 @@ export function normalizeWorkspaceConfig(raw: unknown): RawManifest {
   const replaceExpoScheme = pick(nestedIos?.replaceExpoScheme, raw.replaceExpoScheme);
   const fixExtensionEmbedCycle = pick(nestedIos?.fixExtensionEmbedCycle, raw.fixExtensionEmbedCycle);
 
-  const nestedXcode = isObject(nestedIos?.xcode) ? nestedIos.xcode : undefined;
+  const nestedXcode = isRecord(nestedIos?.xcode) ? nestedIos.xcode : undefined;
   const xcodeEnv = pick(nestedXcode?.env, pick(nestedIos?.xcodeEnv, raw.xcodeEnv));
 
   const { localPods, remotePods } = splitPods(nestedIos, raw);
@@ -104,8 +101,8 @@ function splitPods(
 
 function mergeSwiftPackages(nestedIos: Dict | undefined, raw: Dict): unknown {
   const packages = asArray<Dict>(nestedIos?.packages);
-  const nestedSlice = isObject(nestedIos?.swiftPackages) ? nestedIos.swiftPackages : undefined;
-  const flatSlice = isObject(raw.swiftPackages) ? raw.swiftPackages : undefined;
+  const nestedSlice = isRecord(nestedIos?.swiftPackages) ? nestedIos.swiftPackages : undefined;
+  const flatSlice = isRecord(raw.swiftPackages) ? raw.swiftPackages : undefined;
   const base = nestedSlice ?? flatSlice ?? {};
 
   if (!packages) {
@@ -131,7 +128,7 @@ function applyDefaultDeploymentTarget(targets: unknown, deploymentTarget?: strin
     return targets;
   }
   return targets.map((target) => {
-    if (!isObject(target) || typeof target.deploymentTarget === 'string') {
+    if (!isRecord(target) || typeof target.deploymentTarget === 'string') {
       return target;
     }
     return { ...target, deploymentTarget };

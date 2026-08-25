@@ -1,12 +1,12 @@
 {
-  "name": "share-extension-example",
+  "name": "android-manifest-example",
   "version": "0.1.0",
   "private": true,
   "main": "index.js",
   "scripts": {
     "plan": "expo-workspaces plan",
     "doctor": "expo-workspaces doctor",
-    "prebuild": "expo prebuild"
+    "prebuild": "expo prebuild --platform android"
   },
   "dependencies": {
     "expo": "catalog:",

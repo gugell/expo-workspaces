@@ -64,6 +64,44 @@ var require_appConfig = __commonJS({
   }
 });
 
+// packages/@expo-workspaces/core/build/guards.js
+var require_guards = __commonJS({
+  "packages/@expo-workspaces/core/build/guards.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.isRecord = isRecord;
+    exports2.asRecordArray = asRecordArray;
+    exports2.asStringArray = asStringArray;
+    exports2.compareDottedVersions = compareDottedVersions;
+    function isRecord(value) {
+      return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+    }
+    function asRecordArray(value) {
+      if (!Array.isArray(value))
+        return [];
+      return value.filter(isRecord);
+    }
+    function asStringArray(value) {
+      if (typeof value === "string" && value.length > 0)
+        return [value];
+      if (!Array.isArray(value))
+        return [];
+      return value.filter((entry) => typeof entry === "string" && entry.length > 0);
+    }
+    function compareDottedVersions(left, right) {
+      const a = left.split(".").map((part) => Number.parseInt(part, 10) || 0);
+      const b = right.split(".").map((part) => Number.parseInt(part, 10) || 0);
+      const length = Math.max(a.length, b.length);
+      for (let i = 0; i < length; i += 1) {
+        const delta = (a[i] ?? 0) - (b[i] ?? 0);
+        if (delta !== 0)
+          return delta;
+      }
+      return 0;
+    }
+  }
+});
+
 // packages/@expo-workspaces/core/build/validation.js
 var require_validation = __commonJS({
   "packages/@expo-workspaces/core/build/validation.js"(exports2) {
@@ -124,18 +162,16 @@ var require_normalize = __commonJS({
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.normalizeWorkspaceConfig = normalizeWorkspaceConfig;
+    var guards_1 = require_guards();
     var validation_1 = require_validation();
-    function isObject(value) {
-      return Boolean(value) && typeof value === "object" && !Array.isArray(value);
-    }
     function asArray(value) {
       return Array.isArray(value) ? value : void 0;
     }
     function normalizeWorkspaceConfig(raw) {
-      if (!isObject(raw)) {
+      if (!(0, guards_1.isRecord)(raw)) {
         throw new Error(`${validation_1.ERR} Workspace config must export an object (received ${typeof raw}).`);
       }
-      const nestedIos = isObject(raw.ios) ? raw.ios : void 0;
+      const nestedIos = (0, guards_1.isRecord)(raw.ios) ? raw.ios : void 0;
       const version = raw.schemaVersion ?? raw.manifestVersion ?? 1;
       if (version !== 1) {
         throw new Error(`${validation_1.ERR} Unsupported schemaVersion/manifestVersion: ${String(version)}. Expected 1.`);
@@ -145,7 +181,7 @@ var require_normalize = __commonJS({
       const schemes = pick(nestedIos?.schemes, raw.schemes);
       const replaceExpoScheme = pick(nestedIos?.replaceExpoScheme, raw.replaceExpoScheme);
       const fixExtensionEmbedCycle = pick(nestedIos?.fixExtensionEmbedCycle, raw.fixExtensionEmbedCycle);
-      const nestedXcode = isObject(nestedIos?.xcode) ? nestedIos.xcode : void 0;
+      const nestedXcode = (0, guards_1.isRecord)(nestedIos?.xcode) ? nestedIos.xcode : void 0;
       const xcodeEnv = pick(nestedXcode?.env, pick(nestedIos?.xcodeEnv, raw.xcodeEnv));
       const { localPods, remotePods } = splitPods(nestedIos, raw);
       const podBuildSettings = pick(nestedIos?.podBuildSettings, raw.podBuildSettings);
@@ -200,8 +236,8 @@ var require_normalize = __commonJS({
     }
     function mergeSwiftPackages(nestedIos, raw) {
       const packages = asArray(nestedIos?.packages);
-      const nestedSlice = isObject(nestedIos?.swiftPackages) ? nestedIos.swiftPackages : void 0;
-      const flatSlice = isObject(raw.swiftPackages) ? raw.swiftPackages : void 0;
+      const nestedSlice = (0, guards_1.isRecord)(nestedIos?.swiftPackages) ? nestedIos.swiftPackages : void 0;
+      const flatSlice = (0, guards_1.isRecord)(raw.swiftPackages) ? raw.swiftPackages : void 0;
       const base = nestedSlice ?? flatSlice ?? {};
       if (!packages) {
         return Object.keys(base).length ? base : void 0;
@@ -224,7 +260,7 @@ var require_normalize = __commonJS({
         return targets;
       }
       return targets.map((target) => {
-        if (!isObject(target) || typeof target.deploymentTarget === "string") {
+        if (!(0, guards_1.isRecord)(target) || typeof target.deploymentTarget === "string") {
           return target;
         }
         return { ...target, deploymentTarget };
@@ -307,17 +343,24 @@ var require_loadConfig = __commonJS({
     function loadTypeScript(filePath) {
       const jiti = require("jiti");
       return jiti(__filename, {
-        interopDefault: true,
+        interopDefault: false,
         alias: {
-          "expo-workspaces": resolvePackageRoot()
+          "expo-workspaces": resolveExpoWorkspacesModule()
         }
       })(filePath);
     }
-    function resolvePackageRoot() {
+    function resolveExpoWorkspacesModule() {
       try {
-        return path_1.default.dirname(require.resolve("expo-workspaces/package.json"));
+        return require.resolve("expo-workspaces");
       } catch {
-        return path_1.default.resolve(__dirname, "..");
+        const bundled = path_1.default.resolve(__dirname, "../../../../build/index.js");
+        if (fs_1.default.existsSync(bundled))
+          return bundled;
+        try {
+          return require.resolve("@expo-workspaces/meta");
+        } catch {
+          return path_1.default.resolve(__dirname, "..");
+        }
       }
     }
   }
@@ -573,9 +616,11 @@ var require_plan = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.buildPlanDocument = buildPlanDocument;
     exports2.renderPlanHuman = renderPlanHuman;
+    exports2.declaredTargetNames = declaredTargetNames;
     exports2.serializeOpsForCompare = serializeOpsForCompare;
     var ops_1 = require_ops();
     var secrets_1 = require_secrets();
+    var guards_1 = require_guards();
     function buildPlanDocument(plan, warnings = plan.warnings) {
       const operations = (0, secrets_1.redactDeep)(plan.ops.map((op, index) => (0, ops_1.toPlanOperation)(op, index)));
       return {
@@ -658,6 +703,26 @@ var require_plan = __commonJS({
       }
       return map;
     }
+    function declaredTargetNames(operations) {
+      const names = /* @__PURE__ */ new Set();
+      for (const op of operations) {
+        if (op.kind !== "ios.target.add" || op.desired == null)
+          continue;
+        for (const name of namesFromDesired(op.desired)) {
+          names.add(name);
+        }
+      }
+      return [...names];
+    }
+    function namesFromDesired(desired) {
+      if (Array.isArray(desired)) {
+        return desired.flatMap(namesFromDesired);
+      }
+      if ((0, guards_1.isRecord)(desired) && typeof desired.name === "string" && desired.name) {
+        return [desired.name];
+      }
+      return [];
+    }
     function serializeOpsForCompare(ops) {
       return JSON.stringify(ops.map((op, index) => (0, ops_1.toPlanOperation)(op, index)));
     }
@@ -676,6 +741,7 @@ var require_doctor = __commonJS({
     exports2.runDoctor = runDoctor;
     var fs_1 = __importDefault(require("fs"));
     var path_1 = __importDefault(require("path"));
+    var guards_1 = require_guards();
     var secrets_1 = require_secrets();
     var MIN_NODE = [20, 19, 4];
     var MIN_EXPO_SDK = 56;
@@ -767,7 +833,7 @@ var require_doctor = __commonJS({
           const diagnostics = [];
           targetList(manifest).forEach((target, index) => {
             const dt = typeof target.deploymentTarget === "string" ? target.deploymentTarget : void 0;
-            if (dt && compareVersions(dt, floor) < 0) {
+            if (dt && (0, guards_1.compareDottedVersions)(dt, floor) < 0) {
               diagnostics.push({
                 id: "deployment-target",
                 severity: "warning",
@@ -784,10 +850,10 @@ var require_doctor = __commonJS({
         id: "app-groups",
         title: "App Group entitlements are consistent with the parent app",
         run({ manifest, appConfig }) {
-          const appGroups = asStringArray(appConfig.ios?.entitlements?.["com.apple.security.application-groups"]);
+          const appGroups = (0, guards_1.asStringArray)(appConfig.ios?.entitlements?.["com.apple.security.application-groups"]);
           const diagnostics = [];
           targetList(manifest).forEach((target, index) => {
-            const groups = asStringArray(isRecord(target.entitlements) ? target.entitlements["com.apple.security.application-groups"] : void 0);
+            const groups = (0, guards_1.asStringArray)((0, guards_1.isRecord)(target.entitlements) ? target.entitlements["com.apple.security.application-groups"] : void 0);
             for (const group of groups) {
               if (appGroups.length > 0 && !appGroups.includes(group)) {
                 diagnostics.push({
@@ -809,17 +875,14 @@ var require_doctor = __commonJS({
         run({ manifest }) {
           const targetNames = new Set(targetList(manifest).map((t) => String(t.name)));
           const diagnostics = [];
-          const slice = isRecord(manifest.swiftPackages) ? manifest.swiftPackages : {};
+          const slice = (0, guards_1.isRecord)(manifest.swiftPackages) ? manifest.swiftPackages : {};
           const packages = [
-            ...asRecordArray(slice.remote).map((pkg, i) => ({ pkg, source: `ios.packages.remote[${i}]` })),
-            ...asRecordArray(slice.local).map((pkg, i) => ({ pkg, source: `ios.packages.local[${i}]` }))
+            ...(0, guards_1.asRecordArray)(slice.remote).map((pkg, i) => ({ pkg, source: `ios.packages.remote[${i}]` })),
+            ...(0, guards_1.asRecordArray)(slice.local).map((pkg, i) => ({ pkg, source: `ios.packages.local[${i}]` }))
           ];
           for (const { pkg, source } of packages) {
-            const refs = [...asStringArray(pkg.target), ...asStringArray(pkg.podTarget)];
-            for (const name of refs) {
-              if (targetNames.size > 0 && !targetNames.has(name) && name !== "Pods") {
-                if (asStringArray(pkg.podTarget).includes(name))
-                  continue;
+            for (const name of (0, guards_1.asStringArray)(pkg.target)) {
+              if (targetNames.size > 0 && !targetNames.has(name)) {
                 diagnostics.push({
                   id: "spm-targets",
                   severity: "error",
@@ -836,8 +899,8 @@ var require_doctor = __commonJS({
         id: "signing-secrets",
         title: "Signing secrets are not committed as literals",
         run({ manifest }) {
-          const android = isRecord(manifest.android) ? manifest.android : void 0;
-          const signing = android && isRecord(android.signing) ? android.signing : void 0;
+          const android = (0, guards_1.isRecord)(manifest.android) ? manifest.android : void 0;
+          const signing = android && (0, guards_1.isRecord)(android.signing) ? android.signing : void 0;
           if (!signing)
             return [];
           const diagnostics = [];
@@ -864,22 +927,7 @@ var require_doctor = __commonJS({
       return diagnostics;
     }
     function targetList(manifest) {
-      return asRecordArray(manifest.targets);
-    }
-    function asRecordArray(value) {
-      if (!Array.isArray(value))
-        return [];
-      return value.filter(isRecord);
-    }
-    function asStringArray(value) {
-      if (typeof value === "string" && value)
-        return [value];
-      if (!Array.isArray(value))
-        return [];
-      return value.filter((v) => typeof v === "string" && v.length > 0);
-    }
-    function isRecord(value) {
-      return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+      return (0, guards_1.asRecordArray)(manifest.targets);
     }
     function duplicateDiagnostics(id, values, label) {
       const seen = /* @__PURE__ */ new Set();
@@ -893,18 +941,6 @@ var require_doctor = __commonJS({
         seen.add(value);
       }
       return diagnostics;
-    }
-    function compareVersions(a, b) {
-      const pa = a.split(".").map((n) => Number.parseInt(n, 10) || 0);
-      const pb = b.split(".").map((n) => Number.parseInt(n, 10) || 0);
-      const len = Math.max(pa.length, pb.length);
-      for (let i = 0; i < len; i += 1) {
-        const da = pa[i] ?? 0;
-        const db = pb[i] ?? 0;
-        if (da !== db)
-          return da - db;
-      }
-      return 0;
     }
     function readExpoSdk(projectRoot) {
       const expoPkg = path_1.default.join(projectRoot, "node_modules", "expo", "package.json");
@@ -1101,7 +1137,7 @@ var require_build = __commonJS({
   "packages/@expo-workspaces/core/build/index.js"(exports2) {
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.isFileOp = exports2.FILE_OP_KINDS = exports2.rubyLiteral = exports2.nameMatcherToRuby = exports2.assertNameMatcher = exports2.assertBuildConfiguration = exports2.ERR = exports2.reportWarning = exports2.reportInfo = exports2.reportSkip = exports2.reportChange = exports2.fileExecutor = exports2.exitCodeFor = exports2.EXIT_TOOL_FAILURE = exports2.EXIT_ERROR = exports2.EXIT_OK = exports2.redactDeep = exports2.redactValue = exports2.isLiteralSecret = exports2.resolveSecret = exports2.parseSecretInput = exports2.isEnvRef = exports2.builtinDoctorRules = exports2.runDoctor = exports2.loadAppConfig = exports2.serializeOpsForCompare = exports2.renderPlanHuman = exports2.buildPlanDocument = exports2.toPlanOperation = exports2.withMeta = exports2.collectWorkspacePlan = exports2.normalizeWorkspaceConfig = exports2.DEFAULT_CONFIG_FILENAMES = exports2.resolveConfigPath = exports2.loadWorkspaceConfig = exports2.DEFAULT_MANIFEST_FILENAME = exports2.resolveManifestPath = exports2.loadManifest = exports2.createGeneratorContext = exports2.createWorkspace = void 0;
+    exports2.isFileOp = exports2.FILE_OP_KINDS = exports2.compareDottedVersions = exports2.asStringArray = exports2.asRecordArray = exports2.isRecord = exports2.rubyLiteral = exports2.nameMatcherToRuby = exports2.assertNameMatcher = exports2.assertBuildConfiguration = exports2.ERR = exports2.reportWarning = exports2.reportInfo = exports2.reportSkip = exports2.reportChange = exports2.fileExecutor = exports2.exitCodeFor = exports2.EXIT_TOOL_FAILURE = exports2.EXIT_ERROR = exports2.EXIT_OK = exports2.redactDeep = exports2.redactValue = exports2.isLiteralSecret = exports2.resolveSecret = exports2.parseSecretInput = exports2.isEnvRef = exports2.builtinDoctorRules = exports2.runDoctor = exports2.loadAppConfig = exports2.declaredTargetNames = exports2.serializeOpsForCompare = exports2.renderPlanHuman = exports2.buildPlanDocument = exports2.toPlanOperation = exports2.withMeta = exports2.collectWorkspacePlan = exports2.normalizeWorkspaceConfig = exports2.DEFAULT_CONFIG_FILENAMES = exports2.resolveConfigPath = exports2.loadWorkspaceConfig = exports2.DEFAULT_MANIFEST_FILENAME = exports2.resolveManifestPath = exports2.loadManifest = exports2.createGeneratorContext = exports2.createWorkspace = void 0;
     var createWorkspace_1 = require_createWorkspace();
     Object.defineProperty(exports2, "createWorkspace", { enumerable: true, get: function() {
       return createWorkspace_1.createWorkspace;
@@ -1153,6 +1189,9 @@ var require_build = __commonJS({
     } });
     Object.defineProperty(exports2, "serializeOpsForCompare", { enumerable: true, get: function() {
       return plan_1.serializeOpsForCompare;
+    } });
+    Object.defineProperty(exports2, "declaredTargetNames", { enumerable: true, get: function() {
+      return plan_1.declaredTargetNames;
     } });
     var appConfig_1 = require_appConfig();
     Object.defineProperty(exports2, "loadAppConfig", { enumerable: true, get: function() {
@@ -1230,6 +1269,19 @@ var require_build = __commonJS({
     Object.defineProperty(exports2, "rubyLiteral", { enumerable: true, get: function() {
       return validation_1.rubyLiteral;
     } });
+    var guards_1 = require_guards();
+    Object.defineProperty(exports2, "isRecord", { enumerable: true, get: function() {
+      return guards_1.isRecord;
+    } });
+    Object.defineProperty(exports2, "asRecordArray", { enumerable: true, get: function() {
+      return guards_1.asRecordArray;
+    } });
+    Object.defineProperty(exports2, "asStringArray", { enumerable: true, get: function() {
+      return guards_1.asStringArray;
+    } });
+    Object.defineProperty(exports2, "compareDottedVersions", { enumerable: true, get: function() {
+      return guards_1.compareDottedVersions;
+    } });
     var types_1 = require_types();
     Object.defineProperty(exports2, "FILE_OP_KINDS", { enumerable: true, get: function() {
       return types_1.FILE_OP_KINDS;
@@ -1240,6 +1292,104 @@ var require_build = __commonJS({
   }
 });
 
+// packages/@expo-workspaces/android/build/dependencies.js
+var require_dependencies = __commonJS({
+  "packages/@expo-workspaces/android/build/dependencies.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.androidLibrary = androidLibrary;
+    exports2.renderAndroidDependency = renderAndroidDependency;
+    exports2.renderAndroidDependencies = renderAndroidDependencies;
+    var core_1 = require_build();
+    var CONFIGURATIONS = /* @__PURE__ */ new Set([
+      "implementation",
+      "api",
+      "compileOnly",
+      "runtimeOnly",
+      "debugImplementation",
+      "releaseImplementation"
+    ]);
+    function androidLibrary(module3, configuration = "implementation") {
+      return { module: module3, configuration };
+    }
+    function renderAndroidDependency(dep, label) {
+      if (typeof dep === "string") {
+        const line = dep.trim();
+        if (!line) {
+          throw new Error(`${core_1.ERR} ${label} cannot be empty.`);
+        }
+        return line;
+      }
+      if (!dep || typeof dep !== "object" || !dep.module?.trim()) {
+        throw new Error(`${core_1.ERR} ${label} requires a non-empty "module".`);
+      }
+      const configuration = dep.configuration ?? "implementation";
+      if (!CONFIGURATIONS.has(configuration)) {
+        throw new Error(`${core_1.ERR} ${label}.configuration "${configuration}" is not supported.`);
+      }
+      return `${configuration} '${dep.module.trim()}'`;
+    }
+    function renderAndroidDependencies(deps) {
+      if (!deps?.length) {
+        return { lines: [], desired: [] };
+      }
+      const lines = [];
+      const desired = [];
+      deps.forEach((dep, index) => {
+        const line = renderAndroidDependency(dep, `android.dependencies[${index}]`);
+        lines.push(`    ${line}`);
+        desired.push(typeof dep === "string" ? parseGradleCoordinate(line) : {
+          configuration: dep.configuration ?? "implementation",
+          module: dep.module.trim()
+        });
+      });
+      return { lines, desired };
+    }
+    function parseGradleCoordinate(line) {
+      const match = line.match(/^(implementation|api|compileOnly|runtimeOnly|debugImplementation|releaseImplementation)\s+['"]([^'"]+)['"]$/);
+      if (match) {
+        return { configuration: match[1], module: match[2] };
+      }
+      return { configuration: "implementation", module: line };
+    }
+  }
+});
+
+// packages/@expo-workspaces/android/build/features.js
+var require_features = __commonJS({
+  "packages/@expo-workspaces/android/build/features.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.androidFeature = androidFeature;
+    exports2.normalizeAndroidFeatures = normalizeAndroidFeatures;
+    var core_1 = require_build();
+    function androidFeature(name, required = true) {
+      return { name, required };
+    }
+    function normalizeAndroidFeatures(features) {
+      if (!features?.length)
+        return [];
+      return features.map((feature, index) => {
+        const label = `android.features[${index}]`;
+        if (typeof feature === "string") {
+          if (!feature.trim()) {
+            throw new Error(`${core_1.ERR} ${label} cannot be empty.`);
+          }
+          return { name: feature.trim(), required: true };
+        }
+        if (!feature?.name?.trim()) {
+          throw new Error(`${core_1.ERR} ${label} requires a non-empty "name".`);
+        }
+        return {
+          name: feature.name.trim(),
+          ...feature.required !== void 0 ? { required: feature.required } : {},
+          ...feature.glEsVersion ? { glEsVersion: feature.glEsVersion } : {}
+        };
+      });
+    }
+  }
+});
+
 // packages/@expo-workspaces/android/build/generators/android.js
 var require_android = __commonJS({
   "packages/@expo-workspaces/android/build/generators/android.js"(exports2) {
@@ -1247,6 +1397,8 @@ var require_android = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.androidGenerator = void 0;
     var core_1 = require_build();
+    var dependencies_1 = require_dependencies();
+    var features_1 = require_features();
     var SIGNING_KEYS = {
       storeFile: "EXPO_WORKSPACE_RELEASE_STORE_FILE",
       storePassword: "EXPO_WORKSPACE_RELEASE_STORE_PASSWORD",
@@ -1336,7 +1488,23 @@ var require_android = __commonJS({
             }));
           }
         }
-        if (slice.dependencies?.length) {
+        for (const feature of (0, features_1.normalizeAndroidFeatures)(slice.features)) {
+          ops.push(tag({
+            kind: "androidManifestUsesFeature",
+            name: feature.name,
+            required: feature.required,
+            glEsVersion: feature.glEsVersion,
+            label: `android:feature:${feature.name}`
+          }, {
+            id: `android.feature.${feature.name}`,
+            semanticKind: "android.manifest.feature.add",
+            source: "android.features",
+            files: ["android/app/src/main/AndroidManifest.xml"],
+            desired: feature
+          }));
+        }
+        const { lines, desired } = (0, dependencies_1.renderAndroidDependencies)(slice.dependencies);
+        if (lines.length) {
           ops.push(tag({
             kind: "androidGradleBlock",
             file: "app",
@@ -1344,14 +1512,14 @@ var require_android = __commonJS({
             anchor: "dependencies\\s*\\{",
             offset: 1,
             comment: "//",
-            contents: slice.dependencies.map((line) => `    ${line}`).join("\n"),
+            contents: lines.join("\n"),
             label: "android:dependencies"
           }, {
             id: "android.dependencies",
             semanticKind: "android.dependency.add",
             source: "android.dependencies",
             files: ["android/app/build.gradle"],
-            desired: slice.dependencies
+            desired
           }));
         }
         if (slice.signing) {
@@ -1460,7 +1628,8 @@ var require_types2 = __commonJS({
       "androidGradleBlock",
       "androidGradleReplace",
       "androidManifestPermission",
-      "androidManifestAppAttribute"
+      "androidManifestAppAttribute",
+      "androidManifestUsesFeature"
     ]);
     function isAndroidOp(op) {
       return ANDROID_KINDS.has(op.kind);
@@ -1514,7 +1683,7 @@ var require_androidExecutor = __commonJS({
         });
       };
     }
-    function applyManifest(manifest, permissions, attributes) {
+    function applyManifest(manifest, permissions, attributes, features) {
       for (const op of permissions) {
         config_plugins_12.AndroidConfig.Permissions.ensurePermission(manifest, op.permission);
       }
@@ -1525,6 +1694,26 @@ var require_androidExecutor = __commonJS({
           application.$[op.name] = op.value;
         }
       }
+      for (const op of features) {
+        ensureUsesFeature(manifest, op);
+      }
+    }
+    function ensureUsesFeature(manifest, op) {
+      const root = manifest.manifest;
+      const existing = root["uses-feature"];
+      const list = Array.isArray(existing) ? existing : existing ? [existing] : [];
+      if (list.some((entry) => entry.$?.["android:name"] === op.name)) {
+        return;
+      }
+      const attrs = { "android:name": op.name };
+      if (op.required === false) {
+        attrs["android:required"] = "false";
+      }
+      if (op.glEsVersion) {
+        attrs["android:glEsVersion"] = op.glEsVersion;
+      }
+      list.push({ $: attrs });
+      root["uses-feature"] = list;
     }
     var androidExecutor = (config, ops) => {
       const androidOps = ops.filter(types_1.isAndroidOp);
@@ -1536,6 +1725,7 @@ var require_androidExecutor = __commonJS({
       const replaces = androidOps.filter((o) => o.kind === "androidGradleReplace");
       const permissions = androidOps.filter((o) => o.kind === "androidManifestPermission");
       const attributes = androidOps.filter((o) => o.kind === "androidManifestAppAttribute");
+      const features = androidOps.filter((o) => o.kind === "androidManifestUsesFeature");
       if (properties.length > 0) {
         config = (0, config_plugins_12.withGradleProperties)(config, (cfg) => {
           applyGradleProperties(cfg.modResults, properties);
@@ -1549,9 +1739,9 @@ var require_androidExecutor = __commonJS({
           config = gradleMod(file, fileBlocks, fileReplaces)(config);
         }
       }
-      if (permissions.length > 0 || attributes.length > 0) {
+      if (permissions.length > 0 || attributes.length > 0 || features.length > 0) {
         config = (0, config_plugins_12.withAndroidManifest)(config, (cfg) => {
-          applyManifest(cfg.modResults, permissions, attributes);
+          applyManifest(cfg.modResults, permissions, attributes, features);
           return cfg;
         });
       }
@@ -1566,7 +1756,7 @@ var require_build2 = __commonJS({
   "packages/@expo-workspaces/android/build/index.js"(exports2) {
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.isAndroidOp = exports2.androidExecutor = exports2.androidGenerator = void 0;
+    exports2.normalizeAndroidFeatures = exports2.androidFeature = exports2.renderAndroidDependencies = exports2.renderAndroidDependency = exports2.androidLibrary = exports2.isAndroidOp = exports2.androidExecutor = exports2.androidGenerator = void 0;
     var android_1 = require_android();
     Object.defineProperty(exports2, "androidGenerator", { enumerable: true, get: function() {
       return android_1.androidGenerator;
@@ -1578,6 +1768,23 @@ var require_build2 = __commonJS({
     var types_1 = require_types2();
     Object.defineProperty(exports2, "isAndroidOp", { enumerable: true, get: function() {
       return types_1.isAndroidOp;
+    } });
+    var dependencies_1 = require_dependencies();
+    Object.defineProperty(exports2, "androidLibrary", { enumerable: true, get: function() {
+      return dependencies_1.androidLibrary;
+    } });
+    Object.defineProperty(exports2, "renderAndroidDependency", { enumerable: true, get: function() {
+      return dependencies_1.renderAndroidDependency;
+    } });
+    Object.defineProperty(exports2, "renderAndroidDependencies", { enumerable: true, get: function() {
+      return dependencies_1.renderAndroidDependencies;
+    } });
+    var features_1 = require_features();
+    Object.defineProperty(exports2, "androidFeature", { enumerable: true, get: function() {
+      return features_1.androidFeature;
+    } });
+    Object.defineProperty(exports2, "normalizeAndroidFeatures", { enumerable: true, get: function() {
+      return features_1.normalizeAndroidFeatures;
     } });
   }
 });
@@ -1920,6 +2127,61 @@ var require_pbxExecutor = __commonJS({
   }
 });
 
+// packages/@expo-workspaces/ios-xcode/build/inspect.js
+var require_inspect = __commonJS({
+  "packages/@expo-workspaces/ios-xcode/build/inspect.js"(exports2) {
+    "use strict";
+    var __importDefault = exports2 && exports2.__importDefault || function(mod) {
+      return mod && mod.__esModule ? mod : { "default": mod };
+    };
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.inspectXcodeProject = inspectXcodeProject;
+    var fs_1 = __importDefault(require("fs"));
+    var path_1 = __importDefault(require("path"));
+    var xcode_1 = require("@bacons/xcode");
+    function inspectXcodeProject(iosDir) {
+      const empty = { targets: [], swiftPackages: [], schemes: [] };
+      if (!fs_1.default.existsSync(iosDir))
+        return empty;
+      const xcodeproj = fs_1.default.readdirSync(iosDir).find((name) => name.endsWith(".xcodeproj"));
+      if (!xcodeproj)
+        return empty;
+      const xcodeprojPath = path_1.default.join(iosDir, xcodeproj);
+      const pbxprojPath = path_1.default.join(xcodeprojPath, "project.pbxproj");
+      if (!fs_1.default.existsSync(pbxprojPath))
+        return empty;
+      const project = xcode_1.XcodeProject.open(pbxprojPath);
+      const targets = [];
+      for (const target of project.rootObject.props.targets ?? []) {
+        if (!xcode_1.PBXNativeTarget.is(target))
+          continue;
+        const name = String(target.props.name ?? "").replace(/"/g, "");
+        if (name && !targets.includes(name))
+          targets.push(name);
+      }
+      const swiftPackages = [];
+      const refs = project.rootObject.props.packageReferences;
+      if (Array.isArray(refs)) {
+        for (const ref of refs) {
+          const url = packageReferenceUrl(ref);
+          if (url && !swiftPackages.includes(url))
+            swiftPackages.push(url);
+        }
+      }
+      const schemesDir = path_1.default.join(xcodeprojPath, "xcshareddata", "xcschemes");
+      const schemes = fs_1.default.existsSync(schemesDir) ? fs_1.default.readdirSync(schemesDir).filter((name) => name.endsWith(".xcscheme")).map((name) => name.replace(/\.xcscheme$/, "")) : [];
+      return { targets, swiftPackages, schemes };
+    }
+    function packageReferenceUrl(ref) {
+      if (!ref || typeof ref !== "object")
+        return void 0;
+      const props = ref.props;
+      const url = props?.repositoryURL;
+      return typeof url === "string" && url.length > 0 ? url : void 0;
+    }
+  }
+});
+
 // packages/@expo-workspaces/ios-xcode/build/validate.js
 var require_validate2 = __commonJS({
   "packages/@expo-workspaces/ios-xcode/build/validate.js"(exports2) {
@@ -2168,7 +2430,7 @@ var require_build4 = __commonJS({
   "packages/@expo-workspaces/ios-xcode/build/index.js"(exports2) {
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.fixEmbedCycleGenerator = exports2.xcodeEnvGenerator = exports2.schemesGenerator = exports2.normalizeSchemeDefinitions = exports2.serializeXcodeProject = exports2.openXcodeProject = exports2.isPbxOp = exports2.pbxOp = exports2.pbxExecutor = void 0;
+    exports2.fixEmbedCycleGenerator = exports2.xcodeEnvGenerator = exports2.schemesGenerator = exports2.normalizeSchemeDefinitions = exports2.inspectXcodeProject = exports2.serializeXcodeProject = exports2.openXcodeProject = exports2.isPbxOp = exports2.pbxOp = exports2.pbxExecutor = void 0;
     var pbxExecutor_1 = require_pbxExecutor();
     Object.defineProperty(exports2, "pbxExecutor", { enumerable: true, get: function() {
       return pbxExecutor_1.pbxExecutor;
@@ -2186,6 +2448,10 @@ var require_build4 = __commonJS({
     } });
     Object.defineProperty(exports2, "serializeXcodeProject", { enumerable: true, get: function() {
       return openProject_1.serializeXcodeProject;
+    } });
+    var inspect_1 = require_inspect();
+    Object.defineProperty(exports2, "inspectXcodeProject", { enumerable: true, get: function() {
+      return inspect_1.inspectXcodeProject;
     } });
     var validate_1 = require_validate2();
     Object.defineProperty(exports2, "normalizeSchemeDefinitions", { enumerable: true, get: function() {
@@ -3588,6 +3854,9 @@ var require_helpers = __commonJS({
     exports2.swiftPackage = swiftPackage;
     exports2.localSwiftPackage = localSwiftPackage;
     exports2.scheme = scheme;
+    exports2.androidLibrary = androidLibrary;
+    exports2.androidFeature = androidFeature;
+    var android_1 = require_build2();
     function defineWorkspace(config) {
       return config;
     }
@@ -3609,12 +3878,18 @@ var require_helpers = __commonJS({
     function scheme(spec) {
       return spec;
     }
+    function androidLibrary(module3, configuration = "implementation") {
+      return (0, android_1.androidLibrary)(module3, configuration);
+    }
+    function androidFeature(name, required = true) {
+      return (0, android_1.androidFeature)(name, required);
+    }
   }
 });
 
 // packages/expo-workspaces/build/index.js
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.scheme = exports.localSwiftPackage = exports.swiftPackage = exports.appClip = exports.widgetExtension = exports.shareExtension = exports.defineWorkspace = exports.withWorkspace = void 0;
+exports.androidFeature = exports.androidLibrary = exports.scheme = exports.localSwiftPackage = exports.swiftPackage = exports.appClip = exports.widgetExtension = exports.shareExtension = exports.defineWorkspace = exports.withWorkspace = void 0;
 var config_plugins_1 = require("@expo/config-plugins");
 var withWorkspace_1 = require_withWorkspace();
 Object.defineProperty(exports, "withWorkspace", { enumerable: true, get: function() {
@@ -3643,4 +3918,10 @@ Object.defineProperty(exports, "localSwiftPackage", { enumerable: true, get: fun
 } });
 Object.defineProperty(exports, "scheme", { enumerable: true, get: function() {
   return helpers_1.scheme;
+} });
+Object.defineProperty(exports, "androidLibrary", { enumerable: true, get: function() {
+  return helpers_1.androidLibrary;
+} });
+Object.defineProperty(exports, "androidFeature", { enumerable: true, get: function() {
+  return helpers_1.androidFeature;
 } });

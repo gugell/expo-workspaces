@@ -1,5 +1,14 @@
 // Public type surface for the bundled `expo-workspaces` package.
-import type { SpmLocalPackage, SpmRemotePackage, TargetSpec, WorkspaceConfig, WorkspaceManifest } from './types';
+import type {
+  AndroidLibraryDependency,
+  AndroidUsesFeature,
+  GradleConfiguration,
+  SpmLocalPackage,
+  SpmRemotePackage,
+  TargetSpec,
+  WorkspaceConfig,
+  WorkspaceManifest,
+} from './types';
 import type { SchemeDefinition } from './types';
 
 export * from './types';
@@ -11,6 +20,11 @@ export declare function appClip(spec: Omit<TargetSpec, 'type'>): TargetSpec;
 export declare function swiftPackage(spec: SpmRemotePackage): SpmRemotePackage;
 export declare function localSwiftPackage(spec: SpmLocalPackage): SpmLocalPackage;
 export declare function scheme(spec: SchemeDefinition): SchemeDefinition;
+export declare function androidLibrary(
+  module: string,
+  configuration?: GradleConfiguration,
+): AndroidLibraryDependency;
+export declare function androidFeature(name: string, required?: boolean): AndroidUsesFeature;
 
 export interface WithWorkspaceProps {
   /** Path to the workspace config, relative to the app root. */

@@ -1,10 +1,10 @@
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View } from 'react-native';
 
-export default function App() {
+export function ExampleApp({ title }: { title: string }) {
   return (
     <View style={styles.container}>
-      <Text>Share Extension example</Text>
+      <Text>{title}</Text>
       <StatusBar style="auto" />
     </View>
   );

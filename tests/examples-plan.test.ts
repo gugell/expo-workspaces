@@ -29,14 +29,29 @@ describe('example plans', () => {
     assert.ok(doc.operations.some((op) => op.kind === 'ios.pod.add'));
   });
 
-  it('android-config redacts signing secrets and plans minSdk 26', () => {
-    const ctx = createGeneratorContext(path.join(examples, 'android-config'));
+  it('android-gradle plans SDK, structured deps, and redacted signing', () => {
+    const ctx = createGeneratorContext(path.join(examples, 'android-gradle'));
     const doc = buildPlanDocument(collectWorkspacePlan(workspaceGenerators, ctx));
     const sdk = doc.operations.find((op) => op.id === 'android.sdk.minSdkVersion');
     assert.equal(sdk?.desired, 26);
+    const deps = doc.operations.find((op) => op.id === 'android.dependencies');
+    assert.ok(Array.isArray(deps?.desired));
+    assert.ok(
+      (deps?.desired as Array<{ module?: string }>).some((dep) => dep.module?.includes('work-runtime-ktx')),
+    );
     const password = doc.operations.find((op) => op.id === 'android.signing.storePassword');
-    assert.ok(password);
     assert.deepEqual(password?.desired, { env: 'EXPO_WORKSPACE_RELEASE_STORE_PASSWORD' });
+  });
+
+  it('android-manifest plans permissions, uses-feature, and application attributes', () => {
+    const ctx = createGeneratorContext(path.join(examples, 'android-manifest'));
+    const doc = buildPlanDocument(collectWorkspacePlan(workspaceGenerators, ctx));
+    assert.ok(doc.operations.some((op) => op.id === 'android.permission.android.permission.CAMERA'));
+    const feature = doc.operations.find((op) => op.id === 'android.feature.android.hardware.camera');
+    assert.equal((feature?.desired as { name: string }).name, 'android.hardware.camera');
+    assert.equal((feature?.desired as { required?: boolean }).required, false);
+    const attr = doc.operations.find((op) => op.id === 'android.appAttribute.android:largeHeap');
+    assert.equal(attr?.desired, 'true');
   });
 
   it('multi-scheme and widget configs load', () => {

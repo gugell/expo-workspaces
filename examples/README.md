@@ -1,13 +1,11 @@
 # Examples
 
-Each app is independently installable. From a clean clone:
+Example apps are pnpm workspace packages. From a clean clone:
 
 ```sh
-pnpm install   # repo root — builds the plugin
-cd examples/share-extension
 pnpm install
-pnpm exec expo-workspaces plan
-npx expo prebuild
+node bin/expo-workspaces.js --project examples/android-gradle plan
+# or: pnpm --filter android-gradle-example plan
 ```
 
 | Example | What it shows |
@@ -16,10 +14,7 @@ npx expo prebuild
 | [widget](widget) | WidgetKit extension target |
 | [native-dependencies](native-dependencies) | SPM + CocoaPods |
 | [multi-scheme](multi-scheme) | Shared Xcode schemes |
-| [android-config](android-config) | SDK, permissions, env-based signing |
+| [android-gradle](android-gradle) | SDK, gradle.properties, structured deps, env signing |
+| [android-manifest](android-manifest) | permissions, uses-feature, application attributes |
 
-Run `expo-workspaces plan` from the repo against an example without installing Expo in the example:
-
-```sh
-node bin/expo-workspaces.js --project examples/share-extension plan
-```
+Shared Expo/React versions live in the root [pnpm catalog](../pnpm-workspace.yaml). `expo-workspaces` is linked with `workspace:*`.

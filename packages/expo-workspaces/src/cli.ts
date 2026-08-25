@@ -5,6 +5,7 @@ import {
   buildPlanDocument,
   collectWorkspacePlan,
   createGeneratorContext,
+  declaredTargetNames,
   EXIT_ERROR,
   EXIT_OK,
   EXIT_TOOL_FAILURE,
@@ -14,6 +15,8 @@ import {
   renderPlanHuman,
   runDoctor,
   type Diagnostic,
+  type RawManifest,
+  type WorkspacePlan,
 } from '@expo-workspaces/core';
 
 import { workspaceGenerators } from './engine';
@@ -91,13 +94,27 @@ function printDiagnostics(title: string, diagnostics: Diagnostic[], json: boolea
   console.log(`${errors} errors · ${warnings} warnings`);
 }
 
-function collectPlan(args: CliArgs) {
-  const ctx = createGeneratorContext(args.projectRoot, args.configPath);
-  return collectWorkspacePlan(workspaceGenerators, ctx);
+function loadSession(args: CliArgs): {
+  configPath: string;
+  loadedAs: string;
+  manifest: RawManifest;
+  plan: WorkspacePlan;
+} {
+  const loaded = loadWorkspaceConfig(args.projectRoot, args.configPath);
+  const plan = collectWorkspacePlan(
+    workspaceGenerators,
+    createGeneratorContext(args.projectRoot, args.configPath),
+  );
+  return {
+    configPath: loaded.configPath,
+    loadedAs: loaded.loadedAs,
+    manifest: loaded.manifest,
+    plan,
+  };
 }
 
 function runPlan(args: CliArgs): number {
-  const plan = collectPlan(args);
+  const { plan } = loadSession(args);
   const doc = buildPlanDocument(plan);
   if (args.json) {
     console.log(JSON.stringify(doc, null, 2));
@@ -110,26 +127,25 @@ function runPlan(args: CliArgs): number {
 
 function runValidate(args: CliArgs): number {
   try {
-    const loaded = loadWorkspaceConfig(args.projectRoot, args.configPath);
-    const plan = collectPlan(args);
+    const session = loadSession(args);
     const diagnostics = runDoctor({
       projectRoot: args.projectRoot,
-      configPath: loaded.configPath,
-      manifest: loaded.manifest,
+      configPath: session.configPath,
+      manifest: session.manifest,
       appConfig: loadAppConfig(args.projectRoot),
-      plan,
+      plan: session.plan,
       nodeVersion: process.versions.node,
     }).filter((d) => d.severity === 'error');
     if (args.json) {
       console.log(
         JSON.stringify(
-          { valid: diagnostics.length === 0, configPath: loaded.configPath, diagnostics },
+          { valid: diagnostics.length === 0, configPath: session.configPath, diagnostics },
           null,
           2,
         ),
       );
     } else if (diagnostics.length === 0) {
-      console.log(`✓ ${loaded.loadedAs} is valid`);
+      console.log(`✓ ${session.loadedAs} is valid`);
     } else {
       printDiagnostics('Validate', diagnostics, false);
     }
@@ -141,14 +157,13 @@ function runValidate(args: CliArgs): number {
 
 function runDoctorCommand(args: CliArgs): number {
   try {
-    const loaded = loadWorkspaceConfig(args.projectRoot, args.configPath);
-    const plan = collectPlan(args);
+    const session = loadSession(args);
     const diagnostics = runDoctor({
       projectRoot: args.projectRoot,
-      configPath: loaded.configPath,
-      manifest: loaded.manifest,
+      configPath: session.configPath,
+      manifest: session.manifest,
       appConfig: loadAppConfig(args.projectRoot),
-      plan,
+      plan: session.plan,
       nodeVersion: process.versions.node,
     });
     printDiagnostics('Expo Workspace Doctor', diagnostics, args.json);
@@ -159,7 +174,7 @@ function runDoctorCommand(args: CliArgs): number {
 }
 
 function runExplain(args: CliArgs): number {
-  const doc = buildPlanDocument(collectPlan(args));
+  const doc = buildPlanDocument(loadSession(args).plan);
   const ops = args.id ? doc.operations.filter((op) => op.id === args.id || op.label === args.id) : doc.operations;
   if (args.id && ops.length === 0) {
     fail(`No operation matching "${args.id}"`, EXIT_ERROR);
@@ -182,18 +197,10 @@ function runExplain(args: CliArgs): number {
 }
 
 function runDiff(args: CliArgs): number {
-  const plan = collectPlan(args);
+  const plan = loadSession(args).plan;
   const doc = buildPlanDocument(plan);
   const report = inspectNativeProject(args.projectRoot);
-  const declaredTargets = new Set(
-    doc.operations
-      .filter((op) => op.kind === 'ios.target.add' && op.desired && typeof op.desired === 'object')
-      .flatMap((op) => {
-        const desired = op.desired as { name?: string } | Array<{ name?: string }>;
-        if (Array.isArray(desired)) return desired.map((t) => t.name).filter(Boolean) as string[];
-        return desired.name ? [desired.name] : [];
-      }),
-  );
+  const declaredTargets = new Set(declaredTargetNames(doc.operations));
   const extras = report.targets.filter((name) => !declaredTargets.has(name) && !isStockTarget(name));
   const missing = [...declaredTargets].filter((name) => !report.targets.includes(name));
   const payload = {
@@ -249,6 +256,8 @@ function printMigration(report: MigrationReport): void {
   console.log(`✓ ${report.schemes.length} schemes`);
   console.log(`✓ ${report.appGroups.length} App Groups`);
   console.log(`✓ ${report.permissions.length} Android permissions`);
+  console.log(`✓ ${report.features.length} Android uses-feature entries`);
+  console.log(`✓ ${report.dependencies.length} app Gradle dependencies`);
   for (const unknown of report.unknown) {
     console.log(`? ${unknown} (unmodeled — will emit a TODO)`);
   }

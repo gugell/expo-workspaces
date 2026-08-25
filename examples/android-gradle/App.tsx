@@ -1,5 +1,5 @@
 import { ExampleApp } from '../_shared/ExampleApp';
 
 export default function App() {
-  return <ExampleApp title="Share Extension example" />;
+  return <ExampleApp title="Android Gradle example" />;
 }

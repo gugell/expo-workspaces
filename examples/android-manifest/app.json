@@ -1,0 +1,10 @@
+{
+  "expo": {
+    "name": "Android Manifest Example",
+    "slug": "android-manifest-example",
+    "version": "1.0.0",
+    "ios": { "bundleIdentifier": "com.acme.androidmanifest" },
+    "android": { "package": "com.acme.androidmanifest" },
+    "plugins": ["expo-workspaces"]
+  }
+}

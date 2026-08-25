@@ -7,6 +7,7 @@ import type { PatchManifest } from '@expo-workspaces/patch';
 
 export type {
   AndroidManifestSlice,
+  AndroidSlice,
   IosPodsManifest,
   IosSpmManifest,
   IosTargetsManifest,
@@ -47,12 +48,12 @@ export interface IOSWorkspaceConfig {
 
 /**
  * Preferred public authoring shape (`workspace.config.ts`).
- * Flat WorkspaceManifest fields are still accepted and normalized.
+ * Legacy flat `WorkspaceManifest` is still accepted by `defineWorkspace` and the loader.
  */
-export type WorkspaceConfig = {
+export interface WorkspaceConfig {
   schemaVersion?: 1;
   manifestVersion?: 1;
   ios?: IOSWorkspaceConfig;
   android?: AndroidSlice;
   patches?: PatchManifest['patches'];
-} & Partial<WorkspaceManifest>;
+}

@@ -1,6 +1,8 @@
 import { ERR, resolveSecret, withMeta } from '@expo-workspaces/core';
 import type { Generator, OpMeta } from '@expo-workspaces/core';
 
+import { renderAndroidDependencies } from '../dependencies';
+import { normalizeAndroidFeatures } from '../features';
 import type { AndroidOp, AndroidSlice } from '../types';
 
 const SIGNING_KEYS = {
@@ -117,7 +119,29 @@ export const androidGenerator: Generator = {
       }
     }
 
-    if (slice.dependencies?.length) {
+    for (const feature of normalizeAndroidFeatures(slice.features)) {
+      ops.push(
+        tag(
+          {
+            kind: 'androidManifestUsesFeature',
+            name: feature.name,
+            required: feature.required,
+            glEsVersion: feature.glEsVersion,
+            label: `android:feature:${feature.name}`,
+          },
+          {
+            id: `android.feature.${feature.name}`,
+            semanticKind: 'android.manifest.feature.add',
+            source: 'android.features',
+            files: ['android/app/src/main/AndroidManifest.xml'],
+            desired: feature,
+          },
+        ),
+      );
+    }
+
+    const { lines, desired } = renderAndroidDependencies(slice.dependencies);
+    if (lines.length) {
       ops.push(
         tag(
           {
@@ -127,7 +151,7 @@ export const androidGenerator: Generator = {
             anchor: 'dependencies\\s*\\{',
             offset: 1,
             comment: '//',
-            contents: slice.dependencies.map((line) => `    ${line}`).join('\n'),
+            contents: lines.join('\n'),
             label: 'android:dependencies',
           },
           {
@@ -135,7 +159,7 @@ export const androidGenerator: Generator = {
             semanticKind: 'android.dependency.add',
             source: 'android.dependencies',
             files: ['android/app/build.gradle'],
-            desired: slice.dependencies,
+            desired,
           },
         ),
       );

@@ -28,7 +28,7 @@ jobs:
       - run: pnpm test
       - name: Plan example apps
         run: |
-          for example in examples/share-extension examples/widget examples/native-dependencies examples/multi-scheme examples/android-config; do
+          for example in examples/share-extension examples/widget examples/native-dependencies examples/multi-scheme examples/android-gradle examples/android-manifest; do
             echo "::group::$example"
             node bin/expo-workspaces.js --project "$example" validate
             node bin/expo-workspaces.js --project "$example" plan --json > /tmp/plan.json

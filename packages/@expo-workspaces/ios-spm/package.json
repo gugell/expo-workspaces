@@ -14,7 +14,7 @@
   "dependencies": {
     "@expo-workspaces/core": "workspace:",
     "@expo-workspaces/ios-xcode": "workspace:",
-    "@bacons/xcode": "1.0.0-alpha.32"
+    "@bacons/xcode": "catalog:"
   },
   "peerDependencies": {
     "@expo/config-plugins": ">=56.0.0",
@@ -29,7 +29,7 @@
     }
   },
   "devDependencies": {
-    "@types/node": "^22.10.0",
-    "typescript": "~5.9.2"
+    "@types/node": "catalog:",
+    "typescript": "catalog:"
   }
 }

@@ -1,5 +1,6 @@
 import { toPlanOperation } from './ops';
 import { redactDeep } from './secrets';
+import { isRecord } from './guards';
 import type { Op, PlanOperation } from './types';
 import type { WorkspacePlan } from './pipeline';
 
@@ -103,6 +104,28 @@ function groupBy<T, K>(items: T[], key: (item: T) => K): Map<K, T[]> {
     }
   }
   return map;
+}
+
+/** Target names declared by `ios.target.add` operations. */
+export function declaredTargetNames(operations: PlanOperation[]): string[] {
+  const names = new Set<string>();
+  for (const op of operations) {
+    if (op.kind !== 'ios.target.add' || op.desired == null) continue;
+    for (const name of namesFromDesired(op.desired)) {
+      names.add(name);
+    }
+  }
+  return [...names];
+}
+
+function namesFromDesired(desired: unknown): string[] {
+  if (Array.isArray(desired)) {
+    return desired.flatMap(namesFromDesired);
+  }
+  if (isRecord(desired) && typeof desired.name === 'string' && desired.name) {
+    return [desired.name];
+  }
+  return [];
 }
 
 /** @internal used by tests */
