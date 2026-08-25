@@ -1,0 +1,10 @@
+{
+  "expo": {
+    "name": "Multi Scheme Example",
+    "slug": "multi-scheme-example",
+    "version": "1.0.0",
+    "ios": { "bundleIdentifier": "com.acme.schemes" },
+    "android": { "package": "com.acme.schemes" },
+    "plugins": ["expo-workspaces"]
+  }
+}

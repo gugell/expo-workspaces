@@ -1,0 +1,10 @@
+{
+  "expo": {
+    "name": "Android Config Example",
+    "slug": "android-config-example",
+    "version": "1.0.0",
+    "ios": { "bundleIdentifier": "com.acme.androidcfg" },
+    "android": { "package": "com.acme.androidcfg" },
+    "plugins": ["expo-workspaces"]
+  }
+}

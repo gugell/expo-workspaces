@@ -54,6 +54,12 @@ out/
 .env.local
 .env.*.local
 
+# Example app install/prebuild output
+examples/*/node_modules/
+examples/*/ios/
+examples/*/android/
+examples/*/.expo/
+
 # npm cache directory
 .npm
 *.tgz

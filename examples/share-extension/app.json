@@ -1,0 +1,18 @@
+{
+  "expo": {
+    "name": "Share Extension Example",
+    "slug": "share-extension-example",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "ios": {
+      "bundleIdentifier": "com.acme.shareexample",
+      "entitlements": {
+        "com.apple.security.application-groups": ["group.com.acme.shareexample"]
+      }
+    },
+    "android": {
+      "package": "com.acme.shareexample"
+    },
+    "plugins": ["expo-workspaces"]
+  }
+}

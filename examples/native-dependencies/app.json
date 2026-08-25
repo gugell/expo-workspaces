@@ -1,0 +1,10 @@
+{
+  "expo": {
+    "name": "Native Dependencies Example",
+    "slug": "native-dependencies-example",
+    "version": "1.0.0",
+    "ios": { "bundleIdentifier": "com.acme.nativedeps" },
+    "android": { "package": "com.acme.nativedeps" },
+    "plugins": ["expo-workspaces"]
+  }
+}

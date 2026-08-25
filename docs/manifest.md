@@ -1,17 +1,18 @@
 # Manifest reference
 
-The manifest is a CommonJS module (`workspace.manifest.js`) at the app root, loaded with `require()` during `expo prebuild`. Override the path with the `manifestPath` plugin option.
+The preferred config is a TypeScript module (`workspace.config.ts`) at the app root. `workspace.manifest.js` (CommonJS, `manifestVersion: 1`) is still loaded if no `workspace.config.*` file is present. Override the path with the `configPath` (or deprecated `manifestPath`) plugin option.
 
-Author with editor autocomplete via the JSDoc type or the `defineWorkspace` identity helper:
+Author with `defineWorkspace` and target helpers:
 
-```js
-/** @type {import('expo-workspaces/types').WorkspaceManifest} */
-module.exports = { manifestVersion: 1 /* … */ };
-```
+```ts
+import { defineWorkspace, shareExtension, swiftPackage } from 'expo-workspaces';
 
-```js
-const { defineWorkspace } = require('expo-workspaces');
-module.exports = defineWorkspace({ manifestVersion: 1 /* … */ });
+export default defineWorkspace({
+  schemaVersion: 1,
+  ios: {
+    targets: [shareExtension({ name: 'ShareExtension', bundleIdentifier: '.share' })],
+  },
+});
 ```
 
 | Field | Type | Default | Owner |
